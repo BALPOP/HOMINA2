@@ -505,17 +505,20 @@ window.DataStore = (function() {
 
     /**
      * Get platform-filtered counts
-     * @param {string} platform - Platform code
+     * Uses direct platform field on recharges for filtering
+     * 
+     * @param {string} platform - Platform code (ALL, POPN1, POPLUZ)
      * @returns {Object} Counts for the platform
      */
     function getPlatformCounts(platform) {
         const entries = filterByPlatform(state.entries, platform);
         
-        // Get platform-filtered recharges (only recharges for users in this platform)
-        const platformGameIds = new Set(entries.map(e => e.gameId).filter(Boolean));
+        // Get platform-filtered recharges using direct platform field
+        // Each recharge is tagged with platform during fetch
+        const normalizedPlatform = platform ? platform.toUpperCase() : null;
         const recharges = (!platform || platform === 'ALL') 
             ? state.recharges 
-            : state.recharges.filter(r => r.gameId && platformGameIds.has(r.gameId));
+            : state.recharges.filter(r => r.platform && r.platform.toUpperCase() === normalizedPlatform);
         
         const playerIds = new Set();
         const rechargerIds = new Set();
@@ -549,7 +552,9 @@ window.DataStore = (function() {
     
     /**
      * Get recharges filtered by platform
-     * Filters recharges to only those whose gameId exists in the platform-filtered entries
+     * Now filters directly by the platform field tagged on each recharge
+     * (Recharges are tagged with platform during fetch from POPLUZ/POPN1 sheets)
+     * 
      * @param {string} platform - Platform code (ALL, POPN1, POPLUZ)
      * @returns {Object[]} Filtered recharges
      */
@@ -561,12 +566,12 @@ window.DataStore = (function() {
             return state.recharges;
         }
         
-        // Get game IDs that belong to this platform
-        const platformEntries = filterByPlatform(state.entries, currentPlatform);
-        const platformGameIds = new Set(platformEntries.map(e => e.gameId).filter(Boolean));
-        
-        // Filter recharges to only those with game IDs from this platform
-        return state.recharges.filter(r => r.gameId && platformGameIds.has(r.gameId));
+        // Filter recharges directly by their platform field
+        // Each recharge is now tagged with platform during fetch
+        const normalizedPlatform = currentPlatform.toUpperCase();
+        return state.recharges.filter(r => 
+            r.platform && r.platform.toUpperCase() === normalizedPlatform
+        );
     }
     function getResults() { return state.results; }
     function getCounts(platform) { 

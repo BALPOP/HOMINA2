@@ -13,27 +13,35 @@
 // ============================================
 // Data Fetcher Module
 // ============================================
-window.DataFetcher = (function () {
+window.DataFetcher = (function() {
     'use strict';
 
     // ============================================
     // Constants - Data Source URLs
     // ============================================
-
+    
     /**
      * Entries sheet: Contains all lottery ticket registrations
      * Source: SORTE-ADMIN.csv
      * Columns: DATA/HORA REGISTRO, PLATFORM, GAME ID, WHATSAPP, NÚMEROS ESCOLHIDOS, DATA SORTEIO, CONCURSO, BILHETE #, STATUS
      */
     const ENTRIES_SHEET_URL = 'https://docs.google.com/spreadsheets/d/14f_ipSqAq8KCP7aFrbIK9Ztbo33BnCw34DSk5ADdPgI/export?format=csv&gid=0&t=1767491207553';
-
+    
     /**
-     * Recharge sheet: Contains recharge transactions
-     * Columns: Game ID, Recharge ID, Recharge Time, Amount, Status (filters for "充值")
+     * Recharge sheets: Contains recharge transactions for each platform
+     * NEW FORMAT Columns (5 core columns):
+     *   Column 0: Member ID (gameId)
+     *   Column 1: Order Number (rechargeId)
+     *   Column 2: Record Time (timestamp) - DD/MM/YYYY HH:MM:SS
+     *   Column 3: Change Amount (amount)
+     *   Column 4: Balance After Change
+     * 
+     * POPLUZ: Recharge data for POPLUZ platform
+     * POPN1: Recharge data for POPN1 platform
      */
-    const RECHARGE_SHEET_URLS = {
-        POPN1: 'https://docs.google.com/spreadsheets/d/1KcIhrL3EvgdkgHAD-5E2jSK2W1mEZlJ9-D5DBGdxXRU/export?format=csv&gid=0',
-        POPLUZ: 'https://docs.google.com/spreadsheets/d/1H68xaO7xjR-o7ECklQT1oZkT7lkMj5FNydq3nVPimgM/export?format=csv&gid=0'
+    const RECHARGE_SHEET_CSV_URLS = {
+        POPLUZ: 'https://docs.google.com/spreadsheets/d/1H68xaO7xjR-o7ECklQT1oZkT7lkMj5FNydq3nVPimgM/export?format=csv&gid=0',
+        POPN1: 'https://docs.google.com/spreadsheets/d/1KcIhrL3EvgdkgHAD-5E2jSK2W1mEZlJ9-D5DBGdxXRU/export?format=csv&gid=0'
     };
 
     /**
@@ -124,13 +132,13 @@ window.DataFetcher = (function () {
     function isWinnersCacheValid(entries, results) {
         if (!cache.winners.data) return false;
         return cache.winners.entriesHash === simpleHash(entries) &&
-            cache.winners.resultsHash === simpleHash(results);
+               cache.winners.resultsHash === simpleHash(results);
     }
 
     // ============================================
     // Generic Fetch Helper
     // ============================================
-
+    
     /**
      * Fetch CSV data from Google Sheets with timeout and error handling
      * @param {string} url - Sheet export URL
@@ -140,14 +148,14 @@ window.DataFetcher = (function () {
         // Create abort controller for timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
+        
         try {
             const response = await fetch(`${url}&t=${Date.now()}`, {
                 cache: 'no-store',
                 redirect: 'follow',
                 signal: controller.signal
             });
-
+            
             clearTimeout(timeoutId);
 
             if (!response.ok) {
@@ -174,7 +182,7 @@ window.DataFetcher = (function () {
     // ============================================
     // Entries Data
     // ============================================
-
+    
     /**
      * Parse entry row from CSV
      * @param {string[]} row - CSV row values
@@ -195,25 +203,25 @@ window.DataFetcher = (function () {
         // Column 10: STATUS
         const timestamp = row[0] || ''; // DATA/HORA REGISTRO
         const parsedDate = AdminCore.parseBrazilDateTime(timestamp);
-
+        
         // Parse chosen numbers
         const numbersRaw = row[6] || '';
         const numbers = numbersRaw
             .split(/[,;|\t]/)
             .map(n => parseInt(n.trim(), 10))
-            .filter(n => !isNaN(n));
+            .filter(n => !isNaN(n) && n >= 1 && n <= 80);
 
         return {
-            timestamp: parsedDate,
-            timestampRaw: timestamp,
-            platform: row[3] || '',
-            gameId: row[4] || '',
-            whatsapp: row[5] || '',
+            timestamp: timestamp,
+            parsedDate: parsedDate,
+            platform: (row[3] || 'POPN1').trim().toUpperCase(),
+            gameId: (row[4] || '').trim(),
+            whatsapp: (row[5] || '').trim(),
             numbers: numbers,
-            drawDate: row[7] || '',
-            contest: row[8] || '',
-            ticketNumber: row[9] || '',
-            status: row[10] || 'PENDING'
+            drawDate: (row[7] || '').trim(),
+            contest: (row[8] || '').trim(),
+            ticketNumber: (row[9] || '').trim(),
+            status: (row[10] || 'PENDING').trim().toUpperCase()
         };
     }
 
@@ -224,7 +232,7 @@ window.DataFetcher = (function () {
      */
     async function fetchEntries(forceRefresh = false) {
         const now = Date.now();
-
+        
         // Return cached data if valid
         if (!forceRefresh && cache.entries.data && (now - cache.entries.timestamp) < CACHE_TTL) {
             return cache.entries.data;
@@ -249,27 +257,46 @@ window.DataFetcher = (function () {
 
             const delimiter = AdminCore.detectDelimiter(lines[0]);
             const entries = [];
-            let skippedRows = 0;
 
-            // Start from index 1 to skip header
-            for (let i = 1; i < lines.length; i++) {
-                const row = AdminCore.parseCSVLine(lines[i], delimiter);
-                // Basic validation: must have at least timestamp and gameId
-                if (row.length >= 5 && row[0] && row[4]) {
-                    entries.push(parseEntryRow(row));
-                } else {
-                    skippedRows++;
+            // Parse CSV in batches to avoid blocking UI
+            const batchSize = 500;
+            const totalLines = lines.length - 1; // Exclude header
+            for (let i = 1; i < lines.length; i += batchSize) {
+                const batch = lines.slice(i, Math.min(i + batchSize, lines.length));
+                
+                for (const line of batch) {
+                    const row = AdminCore.parseCSVLine(line, delimiter);
+                    if (row.length >= 11 && row[4]) { // Must have at least Game ID (column 4)
+                        entries.push(parseEntryRow(row));
+                    }
+                }
+                
+                // Update loading progress (scaled to 5-25% of total)
+                const parseProgress = Math.min(100, Math.round(((i + batchSize - 1) / totalLines) * 100));
+                const totalProgress = 5 + Math.round((parseProgress / 100) * 20); // 5% to 25%
+                AdminCore.updateLoadingProgress(totalProgress, `Parsing entries... ${parseProgress}%`);
+                
+                // Yield to UI thread after each batch
+                if (i + batchSize < lines.length) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
                 }
             }
 
-            // Entries parsed successfully
-
-            // Sort by timestamp descending (newest first)
-            entries.sort((a, b) => {
-                const ta = a.timestamp ? a.timestamp.getTime() : 0;
-                const tb = b.timestamp ? b.timestamp.getTime() : 0;
-                return tb - ta;
-            });
+            // Sort by timestamp descending (newest first) - defer if large
+            if (entries.length > 1000) {
+                // For large datasets, sort in chunks
+                entries.sort((a, b) => {
+                    const ta = a.parsedDate ? a.parsedDate.getTime() : 0;
+                    const tb = b.parsedDate ? b.parsedDate.getTime() : 0;
+                    return tb - ta;
+                });
+            } else {
+                entries.sort((a, b) => {
+                    const ta = a.parsedDate ? a.parsedDate.getTime() : 0;
+                    const tb = b.parsedDate ? b.parsedDate.getTime() : 0;
+                    return tb - ta;
+                });
+            }
 
             cache.entries = { data: entries, timestamp: now };
             fetchLock.entries = false;
@@ -277,8 +304,8 @@ window.DataFetcher = (function () {
 
         } catch (error) {
             fetchLock.entries = false;
+            // Return cached data if available, even if stale
             if (cache.entries.data) {
-                console.warn('Fetch failed, using stale cache:', error);
                 return cache.entries.data;
             }
             throw error;
@@ -288,46 +315,54 @@ window.DataFetcher = (function () {
     // ============================================
     // Recharge Data
     // ============================================
-
+    
     /**
-     * Parse recharge row from CSV
-     * Expected columns: Game ID, Recharge ID, Timestamp, Amount, Status/Type
+     * Parse recharge row from CSV (NEW FORMAT - 5 core columns)
+     * 
+     * NEW FORMAT Columns:
+     *   Column 0: Member ID (gameId) - 10 digits
+     *   Column 1: Order Number (rechargeId)
+     *   Column 2: Record Time (timestamp) - DD/MM/YYYY HH:MM:SS
+     *   Column 3: Change Amount (amount)
+     *   Column 4: Balance After Change
+     * 
      * @param {string[]} row - CSV row values
-     * @param {string} platform - Platform name (POPN1 or POPLUZ)
+     * @param {string} platform - Platform identifier (POPLUZ or POPN1)
      * @returns {Object|null} Parsed recharge object or null if invalid
      */
     function parseRechargeRow(row, platform) {
-        if (!row || row.length < 4) return null;
-
+        // NEW FORMAT requires at least 5 columns
+        if (!row || row.length < 5) return null;
+        
         // Skip header row
         if (row[0] && (row[0].toLowerCase().includes('member') || row[0].toLowerCase().includes('id'))) {
             return null;
         }
-
-        // CSV Source: NEW format (8 columns)
-        // CSV Structure: Member ID,Order Number,Record Time,Change Amount,Balance After Change,,DATE,TIME
+        
+        // NEW FORMAT (5 core columns):
         // Column 0: Member ID (gameId) - 10 digits (matches GAME ID from entries CSV)
         // Column 1: Order Number (rechargeId)
         // Column 2: Record Time (recharge timestamp) - DD/MM/YYYY HH:MM:SS
         // Column 3: Change Amount (recharge amount)
-
+        // Column 4: Balance After Change
+        
         const gameId = row[0] ? row[0].trim() : '';
         const rechargeId = row[1] ? row[1].trim() : '';
-        const timestampStr = row[2] ? row[2].trim() : '';
-        const amountStr = row[3] ? row[3].trim() : '';
-
+        const timestampStr = row[2] ? row[2].trim() : '';  // NEW: Column 2 (was column 5)
+        const amountStr = row[3] ? row[3].trim() : '';      // NEW: Column 3 (was column 8)
+        
         // Validate game ID (must be 10 digits)
         if (!gameId || !/^\d{10}$/.test(gameId)) {
             return null;
         }
-
+        
         // Parse timestamp from column 2: DD/MM/YYYY HH:MM:SS or D/M/YYYY HH:MM
         // Use AdminCore.parseBrazilDateTime which handles timezone correctly
         let rechargeTime = null;
         if (timestampStr) {
             // Normalize the format: ensure 2-digit day/month and add seconds if missing
             let normalizedTime = timestampStr.trim();
-
+            
             // Handle single-digit day/month: "3/1/2026 13:58" -> "03/01/2026 13:58:00"
             // Also handle cases with or without seconds
             normalizedTime = normalizedTime.replace(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\b/g, (match, d, m, y, h, mm, s) => {
@@ -337,17 +372,17 @@ window.DataFetcher = (function () {
                 const second = s || '00';
                 return `${day}/${month}/${y} ${hour}:${mm}:${second}`;
             });
-
+            
             // Use AdminCore.parseBrazilDateTime for proper timezone handling
             // This function handles DD/MM/YYYY HH:MM:SS format correctly
             rechargeTime = AdminCore.parseBrazilDateTime(normalizedTime);
         }
-
+        
         // Validate date
         if (rechargeTime && (isNaN(rechargeTime.getTime()) || !(rechargeTime instanceof Date))) {
             rechargeTime = null;
         }
-
+        
         // Parse amount from column 3
         let amount = 0;
         if (amountStr) {
@@ -356,33 +391,61 @@ window.DataFetcher = (function () {
                 amount = parsed;
             }
         }
-
+        
         // Skip if missing critical data
         if (!rechargeId || !rechargeTime || amount === 0) {
             return null;
         }
 
         return {
+            platform: platform,  // NEW: Tag recharge with platform
             gameId: gameId,
             rechargeId: rechargeId,
             rechargeTime: rechargeTime,
             rechargeTimeRaw: timestampStr,
             amount: amount,
             status: 'RECHARGE',
-            platform: platform, // Tag with platform
             rawRow: row
         };
     }
 
+    /**
+     * Parse CSV text and extract recharges for a specific platform
+     * @param {string} csvText - Raw CSV text
+     * @param {string} platform - Platform identifier (POPLUZ or POPN1)
+     * @returns {Object[]} Array of recharge objects tagged with platform
+     */
+    function parseRechargeCSV(csvText, platform) {
+        const lines = csvText.split(/\r?\n/).filter(Boolean);
+        
+        if (lines.length <= 1) {
+            return [];
+        }
+
+        const delimiter = AdminCore.detectDelimiter(lines[0]);
+        const recharges = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const row = AdminCore.parseCSVLine(lines[i], delimiter);
+            const recharge = parseRechargeRow(row, platform);
+            if (recharge) {
+                recharges.push(recharge);
+            }
+        }
+
+        return recharges;
+    }
 
     /**
-     * Fetch all recharge data from Google Sheet
+     * Fetch all recharge data from both POPLUZ and POPN1 Google Sheets
+     * Iterates through both platform URLs and combines results
+     * 
      * @param {boolean} forceRefresh - Force refresh ignoring cache
-     * @returns {Promise<Object[]>} Array of recharge objects
+     * @returns {Promise<Object[]>} Array of recharge objects tagged with platform
      */
     async function fetchRecharges(forceRefresh = false) {
         const now = Date.now();
-
+        
         // Return cached data if valid
         if (!forceRefresh && cache.recharges.data && (now - cache.recharges.timestamp) < CACHE_TTL) {
             return cache.recharges.data;
@@ -396,34 +459,26 @@ window.DataFetcher = (function () {
         fetchLock.recharges = true;
 
         try {
-            // Fetch both sheets in parallel
-            const [popn1Csv, popluzCsv] = await Promise.all([
-                fetchCSV(RECHARGE_SHEET_URLS.POPN1),
-                fetchCSV(RECHARGE_SHEET_URLS.POPLUZ)
-            ]);
-
             const allRecharges = [];
+            const platformCount = { POPLUZ: 0, POPN1: 0 };
 
-            // Helper to process a CSV string
-            const processCSV = (csvText, platform) => {
-                const lines = csvText.split(/\r?\n/).filter(Boolean);
-                if (lines.length <= 1) return;
-
-                const delimiter = AdminCore.detectDelimiter(lines[0]);
-                for (let i = 1; i < lines.length; i++) {
-                    const row = AdminCore.parseCSVLine(lines[i], delimiter);
-                    const recharge = parseRechargeRow(row, platform);
-                    if (recharge) {
-                        allRecharges.push(recharge);
-                    }
+            // Iterate through both platforms and fetch recharge data
+            for (const [platform, url] of Object.entries(RECHARGE_SHEET_CSV_URLS)) {
+                try {
+                    const csvText = await fetchCSV(url);
+                    const recharges = parseRechargeCSV(csvText, platform);
+                    allRecharges.push(...recharges);
+                    platformCount[platform] = recharges.length;
+                    console.log(`📊 Fetched ${recharges.length} recharges from ${platform}`);
+                } catch (platformError) {
+                    console.error(`❌ Error fetching ${platform} recharges:`, platformError);
+                    // Continue with other platform even if one fails
                 }
-            };
+            }
 
-            // Process both CSVs
-            processCSV(popn1Csv, 'POPN1');
-            processCSV(popluzCsv, 'POPLUZ');
+            console.log(`📊 Total recharges loaded: ${allRecharges.length} (POPLUZ: ${platformCount.POPLUZ}, POPN1: ${platformCount.POPN1})`);
 
-            // Sort by timestamp descending
+            // Sort by timestamp descending (newest first)
             allRecharges.sort((a, b) => {
                 const ta = a.rechargeTime ? a.rechargeTime.getTime() : 0;
                 const tb = b.rechargeTime ? b.rechargeTime.getTime() : 0;
@@ -437,7 +492,6 @@ window.DataFetcher = (function () {
         } catch (error) {
             fetchLock.recharges = false;
             if (cache.recharges.data) {
-                console.warn('Fetch failed, using stale cache:', error);
                 return cache.recharges.data;
             }
             throw error;
@@ -447,7 +501,7 @@ window.DataFetcher = (function () {
     // ============================================
     // Aggregation Helpers
     // ============================================
-
+    
     /**
      * Get unique game IDs from entries
      * @param {Object[]} entries - Entry objects
@@ -473,7 +527,7 @@ window.DataFetcher = (function () {
      */
     function groupEntriesByDate(entries) {
         const grouped = {};
-
+        
         entries.forEach(entry => {
             // Validate date before formatting
             if (entry.parsedDate && entry.parsedDate instanceof Date && !isNaN(entry.parsedDate.getTime())) {
@@ -486,7 +540,7 @@ window.DataFetcher = (function () {
                 }
             }
         });
-
+        
         return grouped;
     }
 
@@ -497,7 +551,7 @@ window.DataFetcher = (function () {
      */
     function groupRechargesByDate(recharges) {
         const grouped = {};
-
+        
         recharges.forEach(recharge => {
             // Validate date before formatting
             if (recharge.rechargeTime && recharge.rechargeTime instanceof Date && !isNaN(recharge.rechargeTime.getTime())) {
@@ -510,7 +564,7 @@ window.DataFetcher = (function () {
                 }
             }
         });
-
+        
         return grouped;
     }
 
@@ -521,7 +575,7 @@ window.DataFetcher = (function () {
      */
     function groupEntriesByContest(entries) {
         const grouped = {};
-
+        
         entries.forEach(entry => {
             const contest = entry.contest || 'Unknown';
             if (!grouped[contest]) {
@@ -529,7 +583,7 @@ window.DataFetcher = (function () {
             }
             grouped[contest].push(entry);
         });
-
+        
         return grouped;
     }
 
@@ -544,8 +598,8 @@ window.DataFetcher = (function () {
         const cutoff = new Date(now);
         cutoff.setDate(cutoff.getDate() - days);
         cutoff.setHours(0, 0, 0, 0);
-
-        return entries.filter(entry =>
+        
+        return entries.filter(entry => 
             entry.parsedDate && entry.parsedDate >= cutoff
         );
     }
@@ -561,8 +615,8 @@ window.DataFetcher = (function () {
         const cutoff = new Date(now);
         cutoff.setDate(cutoff.getDate() - days);
         cutoff.setHours(0, 0, 0, 0);
-
-        return recharges.filter(recharge =>
+        
+        return recharges.filter(recharge => 
             recharge.rechargeTime && recharge.rechargeTime >= cutoff
         );
     }
@@ -575,10 +629,10 @@ window.DataFetcher = (function () {
      */
     function getTopEntrants(entries, limit = 10) {
         const counts = {};
-
+        
         entries.forEach(entry => {
             if (!entry.gameId) return;
-
+            
             if (!counts[entry.gameId]) {
                 counts[entry.gameId] = {
                     gameId: entry.gameId,
@@ -590,7 +644,7 @@ window.DataFetcher = (function () {
             counts[entry.gameId].count++;
             counts[entry.gameId].entries.push(entry);
         });
-
+        
         return Object.values(counts)
             .sort((a, b) => b.count - a.count)
             .slice(0, limit);
@@ -599,7 +653,7 @@ window.DataFetcher = (function () {
     // ============================================
     // Cache Management
     // ============================================
-
+    
     /**
      * Clear all cached data
      */
@@ -635,7 +689,7 @@ window.DataFetcher = (function () {
     // ============================================
     // Refresh Handler
     // ============================================
-
+    
     /**
      * Refresh all data (called by auto-refresh)
      */
@@ -659,7 +713,7 @@ window.DataFetcher = (function () {
         fetchEntries,
         fetchRecharges,
         refreshAll,
-
+        
         // Aggregation helpers
         getUniqueGameIds,
         getUniqueRechargerIds,
@@ -669,11 +723,11 @@ window.DataFetcher = (function () {
         getEntriesLastNDays,
         getRechargesLastNDays,
         getTopEntrants,
-
+        
         // Cache management
         clearCache,
         getCacheStatus,
-
+        
         // Processed data cache
         getCachedValidation,
         setCachedValidation,
@@ -681,7 +735,7 @@ window.DataFetcher = (function () {
         setCachedWinners,
         isWinnersCacheValid,
         simpleHash,
-
+        
         // Constants
         CACHE_TTL
     };

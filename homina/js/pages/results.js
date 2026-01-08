@@ -105,7 +105,7 @@ window.ResultsPage = (function() {
                 <!-- Info -->
                 <div class="mt-4 text-center text-muted" style="font-size: 0.85rem;">
                     <p>📢 Results are obtained from the official Quina lottery.</p>
-                    <p>Source: <a href="https://loterias.caixa.gov.br" target="_blank">loterias.caixa.gov.br</a></p>
+                    <p>Source: <a href="https://loterias.caixa.gov.br/Paginas/quina.aspx" target="_blank">loterias.caixa.gov.br</a></p>
                 </div>
             </div>
         `;

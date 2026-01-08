@@ -10,18 +10,18 @@
 // ============================================
 // Results Fetcher Module
 // ============================================
-window.ResultsFetcher = (function () {
+window.ResultsFetcher = (function() {
     'use strict';
 
     // ============================================
     // Constants
     // ============================================
-
+    
     /**
      * Results sheet: Contains official lottery results
      * Columns: Contest, Draw Date, Number1, Number2, Number3, Number4, Number5, Saved At, Source
      */
-    const RESULTS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/14f_ipSqAq8KCP7aFrbIK9Ztbo33BnCw34DSk5ADdPgI/export?format=csv&gid=1178367669';
+    const RESULTS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1OttNYHiecAuGG6IRX7lW6lkG5ciEcL8gp3g6lNrN9H8/export?format=csv&gid=300277644';
 
     /**
      * Cache TTL in milliseconds (3 minutes - matches refresh interval)
@@ -46,7 +46,7 @@ window.ResultsFetcher = (function () {
     // ============================================
     // Fetch Helper
     // ============================================
-
+    
     /**
      * Fetch CSV data from Google Sheets with timeout
      * @param {string} url - Sheet export URL
@@ -55,14 +55,14 @@ window.ResultsFetcher = (function () {
     async function fetchCSV(url) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
+        
         try {
             const response = await fetch(`${url}&t=${Date.now()}`, {
                 cache: 'no-store',
                 redirect: 'follow',
                 signal: controller.signal
             });
-
+            
             clearTimeout(timeoutId);
 
             if (!response.ok) {
@@ -88,7 +88,7 @@ window.ResultsFetcher = (function () {
     // ============================================
     // Results Data
     // ============================================
-
+    
     /**
      * Parse result row from CSV
      * @param {string[]} row - CSV row values
@@ -98,7 +98,7 @@ window.ResultsFetcher = (function () {
         // Expected columns: Contest, Draw Date, Num1, Num2, Num3, Num4, Num5, Saved At, Source
         const contest = (row[0] || '').trim();
         const drawDateRaw = (row[1] || '').trim();
-
+        
         if (!contest) return null;
 
         // Check for "No draw" entries
@@ -160,7 +160,7 @@ window.ResultsFetcher = (function () {
      */
     async function fetchResults(forceRefresh = false) {
         const now = Date.now();
-
+        
         // Return cached data if valid
         if (!forceRefresh && cache.results.data && (now - cache.results.timestamp) < CACHE_TTL) {
             return cache.results.data;
@@ -219,7 +219,7 @@ window.ResultsFetcher = (function () {
     // ============================================
     // Result Lookup Helpers
     // ============================================
-
+    
     /**
      * Get result by contest number
      * @param {string|number} contest - Contest number
@@ -260,8 +260,8 @@ window.ResultsFetcher = (function () {
         const cutoff = new Date(now);
         cutoff.setDate(cutoff.getDate() - days);
         cutoff.setHours(0, 0, 0, 0);
-
-        return results.filter(result =>
+        
+        return results.filter(result => 
             result.drawDateParsed && result.drawDateParsed >= cutoff
         );
     }
@@ -293,7 +293,7 @@ window.ResultsFetcher = (function () {
     // ============================================
     // Cache Management
     // ============================================
-
+    
     /**
      * Clear cached results
      */
@@ -326,7 +326,7 @@ window.ResultsFetcher = (function () {
     return {
         // Fetch methods
         fetchResults,
-
+        
         // Lookup helpers
         getResultByContest,
         getLatestResult,
@@ -334,11 +334,11 @@ window.ResultsFetcher = (function () {
         getResultsLastNDays,
         getUniqueContests,
         getResultsMap,
-
+        
         // Cache management
         clearCache,
         getCacheStatus,
-
+        
         // Constants
         CACHE_TTL
     };

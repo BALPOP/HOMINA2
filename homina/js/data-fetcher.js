@@ -318,6 +318,50 @@ window.DataFetcher = (function() {
     // ============================================
     
     /**
+     * Month name to number mapping for weekday date parsing
+     */
+    const MONTH_MAP = {
+        'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
+        'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11,
+        'feb': 1, 'apr': 3, 'may': 4, 'aug': 7, 'sep': 8, 'oct': 9, 'dec': 11
+    };
+
+    /**
+     * Parse weekday format datetime string
+     * Handles formats like: "Thu, 08 Jan 2026 14:21:00" or "Thu, 08 Jan 2026" + "14:21:00"
+     * 
+     * @param {string} str - DateTime string in weekday format
+     * @returns {Date|null} Parsed Date object or null if invalid
+     */
+    function parseWeekdayDateTime(str) {
+        if (!str) return null;
+        
+        try {
+            // Remove weekday prefix: "Thu, " or "Thu," or "Thu "
+            const cleaned = str.replace(/^[A-Za-z]{3},?\s*/, '').trim();
+            
+            // Match: "08 Jan 2026 14:21:00" or "08 Jan 2026"
+            const match = cleaned.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i);
+            if (!match) return null;
+            
+            const day = parseInt(match[1], 10);
+            const monthStr = match[2].toLowerCase();
+            const year = parseInt(match[3], 10);
+            const hour = match[4] ? parseInt(match[4], 10) : 0;
+            const minute = match[5] ? parseInt(match[5], 10) : 0;
+            const second = match[6] ? parseInt(match[6], 10) : 0;
+            
+            const month = MONTH_MAP[monthStr];
+            if (month === undefined) return null;
+            
+            // Create date in BRT (UTC-3) - same as AdminCore.parseBrazilDateTime
+            return new Date(Date.UTC(year, month, day, hour + 3, minute, second));
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * Parse recharge row from CSV (Google Sheet format with DATE + TIME columns)
      * 
      * Google Sheet Format (6 core columns):
@@ -376,8 +420,9 @@ window.DataFetcher = (function() {
         
         // Handle weekday format: "Thu, 08 Jan 2026 14:21:00"
         if (normalizedTime.match(/^[A-Za-z]{3},?\s+/)) {
-            // Parse weekday format using AdminCore
-            rechargeTime = AdminCore.parseBrazilDateTime(normalizedTime);
+            // Parse weekday format manually (AdminCore.parseBrazilDateTime can't handle this)
+            // Format: "Thu, 08 Jan 2026 14:21:00"
+            rechargeTime = parseWeekdayDateTime(normalizedTime);
         } else {
             // Handle DD/MM/YYYY HH:MM:SS format
             // Handle single-digit day/month: "3/1/2026 13:58" -> "03/01/2026 13:58:00"

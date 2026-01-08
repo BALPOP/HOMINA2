@@ -29,12 +29,13 @@ window.DataFetcher = (function() {
     
     /**
      * Recharge sheets: Contains recharge transactions for each platform
-     * NEW FORMAT Columns (5 core columns):
-     *   Column 0: Member ID (gameId)
-     *   Column 1: Order Number (rechargeId)
-     *   Column 2: Record Time (timestamp) - DD/MM/YYYY HH:MM:SS
-     *   Column 3: Change Amount (amount)
-     *   Column 4: Balance After Change
+     * Google Sheet Format (6 core columns):
+     *   Column 0: DATE (like "Thu, 08 Jan 2026" or "08/01/2026")
+     *   Column 1: TIME (like "14:21:00")
+     *   Column 2: Member ID (gameId) - 10 digits
+     *   Column 3: Order Number (rechargeId)
+     *   Column 4: Change Amount (amount)
+     *   Column 5: Balance After Change
      * 
      * POPLUZ: Recharge data for POPLUZ platform
      * POPN1: Recharge data for POPN1 platform
@@ -317,54 +318,69 @@ window.DataFetcher = (function() {
     // ============================================
     
     /**
-     * Parse recharge row from CSV (NEW FORMAT - 5 core columns)
+     * Parse recharge row from CSV (Google Sheet format with DATE + TIME columns)
      * 
-     * NEW FORMAT Columns:
-     *   Column 0: Member ID (gameId) - 10 digits
-     *   Column 1: Order Number (rechargeId)
-     *   Column 2: Record Time (timestamp) - DD/MM/YYYY HH:MM:SS
-     *   Column 3: Change Amount (amount)
-     *   Column 4: Balance After Change
+     * Google Sheet Format (6 core columns):
+     *   Column 0: DATE (like "Thu, 08 Jan 2026" or "08/01/2026")
+     *   Column 1: TIME (like "14:21:00")
+     *   Column 2: Member ID (gameId) - 10 digits
+     *   Column 3: Order Number (rechargeId)
+     *   Column 4: Change Amount (amount)
+     *   Column 5: Balance After Change
      * 
      * @param {string[]} row - CSV row values
      * @param {string} platform - Platform identifier (POPLUZ or POPN1)
      * @returns {Object|null} Parsed recharge object or null if invalid
      */
     function parseRechargeRow(row, platform) {
-        // NEW FORMAT requires at least 5 columns
-        if (!row || row.length < 5) return null;
+        // Google Sheet format requires at least 6 columns
+        if (!row || row.length < 6) return null;
         
-        // Skip header row
-        if (row[0] && (row[0].toLowerCase().includes('member') || row[0].toLowerCase().includes('id'))) {
+        // Skip header row - check various header indicators
+        const firstCol = (row[0] || '').toLowerCase();
+        if (firstCol.includes('date') || firstCol.includes('member') || firstCol.includes('id')) {
             return null;
         }
         
-        // NEW FORMAT (5 core columns):
-        // Column 0: Member ID (gameId) - 10 digits (matches GAME ID from entries CSV)
-        // Column 1: Order Number (rechargeId)
-        // Column 2: Record Time (recharge timestamp) - DD/MM/YYYY HH:MM:SS
-        // Column 3: Change Amount (recharge amount)
-        // Column 4: Balance After Change
+        // Google Sheet Format (6 core columns):
+        // Column 0: DATE (date part of timestamp)
+        // Column 1: TIME (time part of timestamp)
+        // Column 2: Member ID (gameId) - 10 digits (matches GAME ID from entries CSV)
+        // Column 3: Order Number (rechargeId)
+        // Column 4: Change Amount (recharge amount)
+        // Column 5: Balance After Change
         
-        const gameId = row[0] ? row[0].trim() : '';
-        const rechargeId = row[1] ? row[1].trim() : '';
-        const timestampStr = row[2] ? row[2].trim() : '';  // NEW: Column 2 (was column 5)
-        const amountStr = row[3] ? row[3].trim() : '';      // NEW: Column 3 (was column 8)
+        const dateStr = row[0] ? row[0].trim() : '';
+        const timeStr = row[1] ? row[1].trim() : '';
+        const gameId = row[2] ? row[2].trim() : '';
+        const rechargeId = row[3] ? row[3].trim() : '';
+        const amountStr = row[4] ? row[4].trim() : '';
         
         // Validate game ID (must be 10 digits)
         if (!gameId || !/^\d{10}$/.test(gameId)) {
             return null;
         }
         
-        // Parse timestamp from column 2: DD/MM/YYYY HH:MM:SS or D/M/YYYY HH:MM
-        // Use AdminCore.parseBrazilDateTime which handles timezone correctly
+        // Skip if missing date or time
+        if (!dateStr || !timeStr) {
+            return null;
+        }
+        
+        // Combine date and time, then parse
+        // Format: "08/01/2026 14:21:00" or "Thu, 08 Jan 2026 14:21:00"
         let rechargeTime = null;
-        if (timestampStr) {
-            // Normalize the format: ensure 2-digit day/month and add seconds if missing
-            let normalizedTime = timestampStr.trim();
-            
+        const rechargeTimeStr = `${dateStr} ${timeStr}`;
+        
+        // Normalize the format
+        let normalizedTime = rechargeTimeStr.trim();
+        
+        // Handle weekday format: "Thu, 08 Jan 2026 14:21:00"
+        if (normalizedTime.match(/^[A-Za-z]{3},?\s+/)) {
+            // Parse weekday format using AdminCore
+            rechargeTime = AdminCore.parseBrazilDateTime(normalizedTime);
+        } else {
+            // Handle DD/MM/YYYY HH:MM:SS format
             // Handle single-digit day/month: "3/1/2026 13:58" -> "03/01/2026 13:58:00"
-            // Also handle cases with or without seconds
             normalizedTime = normalizedTime.replace(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\b/g, (match, d, m, y, h, mm, s) => {
                 const day = String(d).padStart(2, '0');
                 const month = String(m).padStart(2, '0');
@@ -373,17 +389,15 @@ window.DataFetcher = (function() {
                 return `${day}/${month}/${y} ${hour}:${mm}:${second}`;
             });
             
-            // Use AdminCore.parseBrazilDateTime for proper timezone handling
-            // This function handles DD/MM/YYYY HH:MM:SS format correctly
             rechargeTime = AdminCore.parseBrazilDateTime(normalizedTime);
         }
         
         // Validate date
-        if (rechargeTime && (isNaN(rechargeTime.getTime()) || !(rechargeTime instanceof Date))) {
-            rechargeTime = null;
+        if (!rechargeTime || !(rechargeTime instanceof Date) || isNaN(rechargeTime.getTime())) {
+            return null;
         }
         
-        // Parse amount from column 3
+        // Parse amount from column 4
         let amount = 0;
         if (amountStr) {
             const parsed = parseFloat(amountStr.replace(/,/g, ''));
@@ -393,16 +407,16 @@ window.DataFetcher = (function() {
         }
         
         // Skip if missing critical data
-        if (!rechargeId || !rechargeTime || amount === 0) {
+        if (!rechargeId || amount === 0) {
             return null;
         }
 
         return {
-            platform: platform,  // NEW: Tag recharge with platform
+            platform: platform,  // Tag recharge with platform for composite key validation
             gameId: gameId,
             rechargeId: rechargeId,
             rechargeTime: rechargeTime,
-            rechargeTimeRaw: timestampStr,
+            rechargeTimeRaw: rechargeTimeStr,
             amount: amount,
             status: 'RECHARGE',
             rawRow: row

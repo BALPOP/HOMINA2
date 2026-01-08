@@ -312,31 +312,31 @@ window.DataFetcher = (function () {
      * @returns {Object|null} Parsed recharge object or null if invalid
      */
     function parseRechargeRow(row) {
-        if (!row || row.length < 9) return null;
+        if (!row || row.length < 4) return null;
 
         // Skip header row
         if (row[0] && (row[0].toLowerCase().includes('member') || row[0].toLowerCase().includes('id'))) {
             return null;
         }
 
-        // CSV Source: RECHARGE POPN1 - Sheet1 (7).csv
-        // CSV Structure: Member ID,Order Number,Region,Currency Type,Merchant,Record Time,Account Change Type,Account Change Category II,Change Amount,...
+        // CSV Source: NEW format (8 columns)
+        // CSV Structure: Member ID,Order Number,Record Time,Change Amount,Balance After Change,,DATE,TIME
         // Column 0: Member ID (gameId) - 10 digits (matches GAME ID from entries CSV)
         // Column 1: Order Number (rechargeId)
-        // Column 5: Record Time (recharge timestamp) - DD/MM/YYYY HH:MM:SS
-        // Column 8: Change Amount (recharge amount)
+        // Column 2: Record Time (recharge timestamp) - DD/MM/YYYY HH:MM:SS
+        // Column 3: Change Amount (recharge amount)
 
         const gameId = row[0] ? row[0].trim() : '';
         const rechargeId = row[1] ? row[1].trim() : '';
-        const timestampStr = row[5] ? row[5].trim() : '';
-        const amountStr = row[8] ? row[8].trim() : '';
+        const timestampStr = row[2] ? row[2].trim() : '';
+        const amountStr = row[3] ? row[3].trim() : '';
 
         // Validate game ID (must be 10 digits)
         if (!gameId || !/^\d{10}$/.test(gameId)) {
             return null;
         }
 
-        // Parse timestamp from column 5: DD/MM/YYYY HH:MM:SS or D/M/YYYY HH:MM
+        // Parse timestamp from column 2: DD/MM/YYYY HH:MM:SS or D/M/YYYY HH:MM
         // Use AdminCore.parseBrazilDateTime which handles timezone correctly
         let rechargeTime = null;
         if (timestampStr) {
@@ -363,7 +363,7 @@ window.DataFetcher = (function () {
             rechargeTime = null;
         }
 
-        // Parse amount from column 8
+        // Parse amount from column 3
         let amount = 0;
         if (amountStr) {
             const parsed = parseFloat(amountStr.replace(/,/g, ''));
@@ -387,6 +387,7 @@ window.DataFetcher = (function () {
             rawRow: row
         };
     }
+
 
     /**
      * Fetch all recharge data from Google Sheet

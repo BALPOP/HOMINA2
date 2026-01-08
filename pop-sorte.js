@@ -687,9 +687,10 @@ async function fetchAndPopulateResults() {
                     }
 
                     // Calculate winners (3+ matches required)
-                    // RULE: Only the HIGHEST matching tier wins
-                    // If 2 people have 4 matches and 5 people have 3 matches,
-                    // only the 2 people with 4 matches are shown as winners
+                    // RULE: Only the HIGHEST matching tier wins PER PLATFORM
+                    // Each platform (POPLUZ, POPN1) calculates winners independently
+                    // Example: POPLUZ highest = 4 matches, POPN1 highest = 3 matches
+                    //          Both platforms' top-tier winners are displayed
                     const MIN_MATCHES_TO_WIN = 3;
                     const allPotentialWinners = [];
                     
@@ -707,16 +708,33 @@ async function fetchAndPopulateResults() {
                         }
                     });
 
-                    // Find the highest match count among all potential winners
-                    const highestMatchCount = allPotentialWinners.length > 0 
-                        ? Math.max(...allPotentialWinners.map(w => w.matches))
-                        : 0;
+                    // Group potential winners by platform
+                    const winnersByPlatform = {};
+                    allPotentialWinners.forEach(w => {
+                        const platform = (w.platform || 'POPN1').toUpperCase();
+                        if (!winnersByPlatform[platform]) {
+                            winnersByPlatform[platform] = [];
+                        }
+                        winnersByPlatform[platform].push(w);
+                    });
 
-                    // Filter to only include winners with the highest match count
-                    winners = allPotentialWinners.filter(w => w.matches === highestMatchCount);
+                    // For each platform, find highest match count and filter to only top-tier
+                    winners = [];
+                    Object.keys(winnersByPlatform).forEach(platform => {
+                        const platformWinners = winnersByPlatform[platform];
+                        const highestMatchCount = Math.max(...platformWinners.map(w => w.matches));
+                        
+                        // Only include winners with the highest match count for this platform
+                        const topTierWinners = platformWinners.filter(w => w.matches === highestMatchCount);
+                        winners.push(...topTierWinners);
+                    });
 
-                    // Sort winners by gameId for consistent display
-                    winners.sort((a, b) => a.gameId.localeCompare(b.gameId));
+                    // Sort winners by matches desc (show higher matches first), then by platform, then by gameId
+                    winners.sort((a, b) => {
+                        if (b.matches !== a.matches) return b.matches - a.matches;
+                        if (a.platform !== b.platform) return a.platform.localeCompare(b.platform);
+                        return a.gameId.localeCompare(b.gameId);
+                    });
                 }
             }
         } catch (e) {

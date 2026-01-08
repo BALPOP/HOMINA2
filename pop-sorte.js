@@ -16,28 +16,28 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
             return await fn();
         } catch (error) {
             if (i === maxRetries - 1) throw error;
-
+            
             // Check if error is retryable
-            const shouldRetry =
+            const shouldRetry = 
                 error.message?.includes('Too Many Requests') ||
                 error.message?.includes('429') ||
                 error.message?.includes('503') ||
                 error.message?.includes('timeout') ||
                 error.message?.includes('Network') ||
                 error.message?.includes('Failed to fetch');
-
+            
             if (!shouldRetry) throw error;
-
+            
             // Fast retry: 1s, 2s, 3s
             const delay = baseDelay * (i + 1) + Math.random() * 500;
-            console.log(`⏳ Retry ${i + 1}/${maxRetries} aguardando ${Math.round(delay / 1000)}s...`);
-
+            console.log(`⏳ Retry ${i + 1}/${maxRetries} aguardando ${Math.round(delay/1000)}s...`);
+            
             // Show retry message to user
             const btn = document.getElementById('confirmEntryBtn');
             if (btn) {
                 btn.textContent = `⏳ Tentativa ${i + 2}/${maxRetries}...`;
             }
-
+            
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
@@ -687,14 +687,19 @@ async function fetchAndPopulateResults() {
                     }
 
                     // Calculate winners (3+ matches required)
+                    // RULE: Only the HIGHEST matching tier wins
+                    // If 2 people have 4 matches and 5 people have 3 matches,
+                    // only the 2 people with 4 matches are shown as winners
                     const MIN_MATCHES_TO_WIN = 3;
+                    const allPotentialWinners = [];
+                    
                     entries.forEach(entry => {
                         if (!isValidEntry(entry)) return;
 
                         const matches = countMatches(entry.chosenNumbers, winningNumbers);
 
                         if (matches >= MIN_MATCHES_TO_WIN) {
-                            winners.push({
+                            allPotentialWinners.push({
                                 ...entry,
                                 matches: matches,
                                 matchedNumbers: entry.chosenNumbers.filter(n => winningNumbers.includes(n))
@@ -702,13 +707,16 @@ async function fetchAndPopulateResults() {
                         }
                     });
 
-                    // Sort winners by matches desc, then by gameId
-                    winners.sort((a, b) => {
-                        if (b.matches !== a.matches) {
-                            return b.matches - a.matches;
-                        }
-                        return a.gameId.localeCompare(b.gameId);
-                    });
+                    // Find the highest match count among all potential winners
+                    const highestMatchCount = allPotentialWinners.length > 0 
+                        ? Math.max(...allPotentialWinners.map(w => w.matches))
+                        : 0;
+
+                    // Filter to only include winners with the highest match count
+                    winners = allPotentialWinners.filter(w => w.matches === highestMatchCount);
+
+                    // Sort winners by gameId for consistent display
+                    winners.sort((a, b) => a.gameId.localeCompare(b.gameId));
                 }
             }
         } catch (e) {
@@ -1238,16 +1246,16 @@ function closeUserInfoPopup() {
 function showWinnerPopup() {
     const popup = document.getElementById('winnerPopup');
     popup.style.display = 'block';
-
+    
     // Close popup when clicking outside the content
     const closeOnOutsideClick = (e) => {
         if (e.target === popup) {
             closeWinnerPopup();
         }
     };
-
+    
     popup.addEventListener('click', closeOnOutsideClick);
-
+    
     // Store the event listener so we can remove it later
     popup._closeOnOutsideClick = closeOnOutsideClick;
 }
@@ -1256,7 +1264,7 @@ function showWinnerPopup() {
 function closeWinnerPopup() {
     const popup = document.getElementById('winnerPopup');
     popup.style.display = 'none';
-
+    
     // Remove the outside click listener to prevent memory leaks
     if (popup._closeOnOutsideClick) {
         popup.removeEventListener('click', popup._closeOnOutsideClick);
@@ -1291,7 +1299,7 @@ async function confirmEntry() {
         return;
     }
     isSubmitting = true;
-
+    
     const gameIdRaw = document.getElementById('gameId').value.trim();
     const whatsappOptOut = document.getElementById('whatsappOptOut');
     const whatsappInput = document.getElementById('whatsappNumber');
@@ -1392,7 +1400,7 @@ async function confirmEntry() {
             }
 
             const result = await response.json();
-
+            
             if (!result.success) {
                 throw new Error(result.error || 'Falha ao salvar bilhete');
             }
@@ -1593,28 +1601,28 @@ function updateDrawDateDisplay() {
 })();
 
 // ✅ VLD Ticket Consultation Functionality (uses Google Sheets with blurred data)
-(function () {
+(function() {
     // Determine which sheet to use and which platform to filter
     // Check for both /luz and /luz.html (server might remove .html extension)
     const pathname = window.location.pathname.toLowerCase();
     const href = window.location.href.toLowerCase();
-
+    
     // More robust detection - check pathname, href, and handle trailing slashes
     const isLuzPage = pathname.includes('luz') || href.includes('/luz');
     const isN1Page = !isLuzPage && (pathname.includes('n1') || href.includes('/n1'));
-
+    
     console.log('📍 VLD Section - Page Detection:', { pathname, href, isLuzPage, isN1Page });
     // Debug alert (remove after testing)
     // alert(`Page: ${pathname}\nisLuzPage: ${isLuzPage}\nisN1Page: ${isN1Page}`);
-
+    
     // Use gviz/tq format for sheet name selection (more reliable than &sheet=)
     const ENTRIES_URL = isLuzPage ? 'https://docs.google.com/spreadsheets/d/1b_VAYANY_XUsO0_kZzyb3PpJveO4KviwuF5mPxoHKLo/gviz/tq?tqx=out:csv&sheet=LUZ' :
-        isN1Page ? 'https://docs.google.com/spreadsheets/d/1b_VAYANY_XUsO0_kZzyb3PpJveO4KviwuF5mPxoHKLo/gviz/tq?tqx=out:csv&sheet=N1' :
-            'https://docs.google.com/spreadsheets/d/1OttNYHiecAuGG6IRX7lW6lkG5ciEcL8gp3g6lNrN9H8/export?format=csv&gid=0';
-
+                       isN1Page ? 'https://docs.google.com/spreadsheets/d/1b_VAYANY_XUsO0_kZzyb3PpJveO4KviwuF5mPxoHKLo/gviz/tq?tqx=out:csv&sheet=N1' :
+                       'https://docs.google.com/spreadsheets/d/1OttNYHiecAuGG6IRX7lW6lkG5ciEcL8gp3g6lNrN9H8/export?format=csv&gid=0';
+    
     // Platform filter: only show entries for this platform
     const PLATFORM_FILTER = isLuzPage ? 'POPLUZ' : isN1Page ? 'POPN1' : null;
-
+    
     console.log('🎯 Platform Filter:', PLATFORM_FILTER, '| URL:', ENTRIES_URL);
     console.log('🔧 Filter will be applied:', PLATFORM_FILTER !== null);
 

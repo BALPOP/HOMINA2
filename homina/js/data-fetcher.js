@@ -28,10 +28,13 @@ window.DataFetcher = (function () {
     const ENTRIES_SHEET_URL = 'https://docs.google.com/spreadsheets/d/14f_ipSqAq8KCP7aFrbIK9Ztbo33BnCw34DSk5ADdPgI/export?format=csv&gid=0&t=1767491207553';
 
     /**
-     * Recharge sheet: Contains recharge transactions
-     * Columns: Game ID, Recharge ID, Recharge Time, Amount, Status (filters for "充值")
+     * Recharge sheets: Contains recharge transactions for both platforms
+     * NEW format columns: Member ID, Order Number, Record Time, Change Amount, Balance After Change, , DATE, TIME
      */
-    const RECHARGE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1c6gnCngs2wFOvVayd5XpM9D3LOlKUxtSjl7gfszXcMg/export?format=csv&gid=0';
+    const RECHARGE_SHEET_URLS = {
+        POPLUZ: 'https://docs.google.com/spreadsheets/d/1H68xaO7xjR-o7ECklQT1oZkT7lkMj5FNydq3nVPimgM/export?format=csv&gid=0',
+        POPN1: 'https://docs.google.com/spreadsheets/d/1KcIhrL3EvgdkgHAD-5E2jSK2W1mEZlJ9-D5DBGdxXRU/export?format=csv&gid=0'
+    };
 
     /**
      * Cache TTL in milliseconds (3 minutes - matches refresh interval)
@@ -390,9 +393,9 @@ window.DataFetcher = (function () {
 
 
     /**
-     * Fetch all recharge data from Google Sheet
+     * Fetch all recharge data from both POPLUZ and POPN1 Google Sheets
      * @param {boolean} forceRefresh - Force refresh ignoring cache
-     * @returns {Promise<Object[]>} Array of recharge objects
+     * @returns {Promise<Object[]>} Array of recharge objects from both platforms
      */
     async function fetchRecharges(forceRefresh = false) {
         const now = Date.now();
@@ -410,41 +413,51 @@ window.DataFetcher = (function () {
         fetchLock.recharges = true;
 
         try {
-            const csvText = await fetchCSV(RECHARGE_SHEET_URL);
-            const lines = csvText.split(/\r?\n/).filter(Boolean);
+            const allRecharges = [];
 
-            if (lines.length <= 1) {
-                cache.recharges = { data: [], timestamp: now };
-                fetchLock.recharges = false;
-                return [];
-            }
+            // Fetch from both POPLUZ and POPN1 sheets
+            for (const [platform, url] of Object.entries(RECHARGE_SHEET_URLS)) {
+                try {
+                    const csvText = await fetchCSV(url);
+                    const lines = csvText.split(/\r?\n/).filter(Boolean);
 
-            const delimiter = AdminCore.detectDelimiter(lines[0]);
-            const recharges = [];
-            let skippedRows = 0;
+                    if (lines.length <= 1) {
+                        console.log(`No data found for ${platform}`);
+                        continue;
+                    }
 
-            for (let i = 1; i < lines.length; i++) {
-                const row = AdminCore.parseCSVLine(lines[i], delimiter);
-                const recharge = parseRechargeRow(row);
-                if (recharge) {
-                    recharges.push(recharge);
-                } else {
-                    skippedRows++;
+                    const delimiter = AdminCore.detectDelimiter(lines[0]);
+                    let parsedCount = 0;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const row = AdminCore.parseCSVLine(lines[i], delimiter);
+                        const recharge = parseRechargeRow(row);
+                        if (recharge) {
+                            // Add platform identifier to each recharge
+                            recharge.platform = platform;
+                            allRecharges.push(recharge);
+                            parsedCount++;
+                        }
+                    }
+
+                    console.log(`✅ Loaded ${parsedCount} recharges from ${platform}`);
+                } catch (platformError) {
+                    console.error(`Failed to fetch ${platform} recharges:`, platformError);
+                    // Continue with other platform even if one fails
                 }
             }
 
-            // Recharges parsed successfully
-
             // Sort by timestamp descending
-            recharges.sort((a, b) => {
+            allRecharges.sort((a, b) => {
                 const ta = a.rechargeTime ? a.rechargeTime.getTime() : 0;
                 const tb = b.rechargeTime ? b.rechargeTime.getTime() : 0;
                 return tb - ta;
             });
 
-            cache.recharges = { data: recharges, timestamp: now };
+            console.log(`📊 Total recharges loaded: ${allRecharges.length}`);
+            cache.recharges = { data: allRecharges, timestamp: now };
             fetchLock.recharges = false;
-            return recharges;
+            return allRecharges;
 
         } catch (error) {
             fetchLock.recharges = false;

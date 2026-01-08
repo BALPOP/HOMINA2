@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POP-SORTE Admin</title>
+    <link rel="icon" type="image/png" href="../media/qui.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Hayooo ngintip-ngintip -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content login-modal">
+            <div class="login-header">
+                <img src="../media/qui.png" alt="POP-SORTE" class="login-logo">
+                <h1>POP-SORTE Admin</h1>
+                <p>Enter your credentials to access the dashboard</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                </div>
+                <div id="loginError" class="error-message"></div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loading" style="display:none;">Verifying...</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="app-container" style="display:none;">
+        <!-- Sidebar Navigation - Now for scroll navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../media/qui.png" alt="POP-SORTE" class="sidebar-logo">
+                <h2>POP-SORTE</h2>
+                <span class="admin-badge">ADMIN</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#section-dashboard" class="nav-link active" data-section="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#section-entries" class="nav-link" data-section="entries">
+                    <span class="nav-icon">🎫</span>
+                    <span class="nav-text">Entries</span>
+                </a>
+                <a href="#section-results" class="nav-link" data-section="results">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">Results</span>
+                </a>
+                <a href="#section-winners" class="nav-link" data-section="winners">
+                    <span class="nav-icon">🏆</span>
+                    <span class="nav-text">Winners</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <span id="currentUser" class="user-name">Admin</span>
+                </div>
+                <button id="logoutBtn" class="btn btn-outline btn-sm">
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area - Single Scrollable Page -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <button id="sidebarToggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="topbar-left">
+                    <h1 id="pageTitle">POP-SORTE Admin <span id="platformIndicator" class="platform-indicator"></span></h1>
+                </div>
+                <div class="topbar-center">
+                    <!-- Platform Switcher -->
+                    <div class="platform-switcher">
+                        <button type="button" class="platform-btn active" data-platform="ALL" title="All Platforms Combined">
+                            <span class="platform-icon">🌐</span>
+                            <span class="platform-name">ALL</span>
+                        </button>
+                        <button type="button" class="platform-btn" data-platform="POPN1" title="POPN1 Platform">
+                            <img src="images/TRANSPARENT N1.webp" alt="POPN1" class="platform-logo-img">
+                        </button>
+                        <button type="button" class="platform-btn" data-platform="POPLUZ" title="POPLUZ Platform">
+                            <img src="images/TRANSPARENT POPLUZ.webp" alt="POPLUZ" class="platform-logo-img">
+                        </button>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="refresh-status">
+                        <span id="lastRefresh">Last update: --</span>
+                        <button id="refreshBtn" class="btn btn-icon" title="Refresh data">
+                            🔄
+                        </button>
+                        <button id="clearCacheBtn" class="btn btn-icon" title="Clear cache and reload">
+                            🗑️
+                        </button>
+                    </div>
+                    <div id="connectionStatus" class="connection-status online">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Online</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Unified Scrollable Content -->
+            <div id="pageContainer" class="page-container unified-scroll">
+                
+                <!-- ==================== DASHBOARD SECTION ==================== -->
+                <section id="section-dashboard" class="content-section">
+                    <div class="section-anchor"></div>
+                    <h1 class="page-section-title">📊 Dashboard</h1>
+                    
+                    <!-- All-Time Stats -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">General Data (All Time)</h2>
+                            <span id="platformStatsLabel" class="badge badge-info"></span>
+                        </div>
+                        <div class="stats-grid" id="allTimeStats">
+                            <div class="stat-card primary">
+                                <span class="stat-label">Total Tickets</span>
+                                <span class="stat-value" id="statTotalTickets">--</span>
+                            </div>
+                            <div class="stat-card info">
+                                <span class="stat-label">Total Contests</span>
+                                <span class="stat-value" id="statTotalContests">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Draw Dates</span>
+                                <span class="stat-value" id="statDrawDates">--</span>
+                            </div>
+                            <div class="stat-card warning">
+                                <span class="stat-label">Pending</span>
+                                <span class="stat-value" id="statPending">--</span>
+                            </div>
+                            <div class="stat-card success">
+                                <span class="stat-label">Total Winners</span>
+                                <span class="stat-value" id="statTotalWinners">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Win Rate</span>
+                                <span class="stat-value" id="statWinRate">--</span>
+                            </div>
+                        </div>
+                        <!-- Platform Breakdown -->
+                        <div id="platformBreakdown" class="platform-breakdown" style="display: none;">
+                            <div class="platform-breakdown-item">
+                                <span class="platform-name"><span class="platform-badge popn1">🎰 POPN1</span></span>
+                                <span class="platform-value" id="statPOPN1Tickets">--</span>
+                            </div>
+                            <div class="platform-breakdown-item">
+                                <span class="platform-name"><span class="platform-badge popluz">💡 POPLUZ</span></span>
+                                <span class="platform-value" id="statPOPLUZTickets">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Engagement Overview -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">👥 Engagement Overview</h2>
+                        </div>
+                        <div class="grid-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                                        <div class="stat-card success">
+                                            <span class="stat-label">Rechargers</span>
+                                            <span class="stat-value" id="statRechargers">--</span>
+                                        </div>
+                                        <div class="stat-card primary">
+                                            <span class="stat-label">Participants</span>
+                                            <span class="stat-value" id="statParticipants">--</span>
+                                        </div>
+                                        <div class="stat-card warning">
+                                            <span class="stat-label">Recharged No Ticket</span>
+                                            <span class="stat-value" id="statNoTicket">--</span>
+                                        </div>
+                                        <div class="stat-card info">
+                                            <span class="stat-label">Participation Rate</span>
+                                            <span class="stat-value" id="statParticipationRate">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">🎫 Ticket Creators (7 Days)</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="height: 180px;">
+                                        <canvas id="chartTicketCreators7Day"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Chart -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">📈 Last 7 Days Statistics</h2>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="statisticsDaysSelect" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="7">7 Days</option>
+                                    <option value="14">14 Days</option>
+                                    <option value="30">30 Days</option>
+                                </select>
+                                <select id="chartMetricSelect" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="all">All Metrics</option>
+                                    <option value="entries">Entries Only</option>
+                                    <option value="rechargers">Rechargers Only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="chart-container"><canvas id="chartLast7Days"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recharge vs Tickets -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">💰 Recharge vs Tickets (7 Days)</h2>
+                        </div>
+                        <div class="card">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Rechargers</th>
+                                            <th>Participants</th>
+                                            <th>No Ticket</th>
+                                            <th>Participation %</th>
+                                            <th>Total Entries</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rechargeVsTicketsBody">
+                                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Entrants & Latest Entries -->
+                    <div class="grid-2">
+                        <div class="section">
+                            <div class="section-header"><h2 class="section-title">🔥 Top Entrants</h2></div>
+                            <div class="card">
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead><tr><th>#</th><th>Game ID</th><th>WhatsApp</th><th>Entries</th></tr></thead>
+                                        <tbody id="topEntrantsBody"><tr><td colspan="4" class="text-center text-muted">Loading...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="section-header"><h2 class="section-title">🎫 Latest Entries</h2></div>
+                            <div class="card">
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead><tr><th>Time</th><th>Game ID</th><th>Platform</th><th>Numbers</th><th>Contest</th></tr></thead>
+                                        <tbody id="latestEntriesContainer"><tr><td colspan="5" class="text-center text-muted">Loading...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== ENTRIES SECTION ==================== -->
+                <section id="section-entries" class="content-section">
+                    <div class="section-anchor"></div>
+                    <h1 class="page-section-title">🎫 Entries</h1>
+                    
+                    <!-- Validation Banner -->
+                    <div id="validationBanner" class="status-banner info">
+                        <span class="status-banner-icon">ℹ️</span>
+                        <span class="status-banner-text">Loading validation data...</span>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="stats-grid mb-4">
+                        <div class="stat-card success">
+                            <span class="stat-label">✓ Valid</span>
+                            <span class="stat-value" id="statValid">--</span>
+                        </div>
+                        <div class="stat-card danger">
+                            <span class="stat-label">✗ Invalid</span>
+                            <span class="stat-value" id="statInvalid">--</span>
+                        </div>
+                        <div class="stat-card warning">
+                            <span class="stat-label">⏰ After Cutoff</span>
+                            <span class="stat-value" id="statCutoff">--</span>
+                        </div>
+                        <div class="stat-card primary">
+                            <span class="stat-label">📊 Total Recharges</span>
+                            <span class="stat-value" id="statRechargesCount">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label>Game ID</label>
+                            <input type="text" id="filterGameId" placeholder="Search ID...">
+                        </div>
+                        <div class="filter-group">
+                            <label>WhatsApp</label>
+                            <input type="text" id="filterWhatsapp" placeholder="Search WhatsApp...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Order Number</label>
+                            <input type="text" id="filterOrderNumber" placeholder="Search Order Number...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Contest</label>
+                            <select id="filterContest"><option value="">All</option></select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Validity</label>
+                            <select id="filterValidity">
+                                <option value="all">All</option>
+                                <option value="valid">Valid</option>
+                                <option value="invalid">Invalid</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Sort By</label>
+                            <select id="sortBy">
+                                <option value="date-desc">Date (Newest First)</option>
+                                <option value="date-asc">Date (Oldest First)</option>
+                                <option value="cutoff-yes">Cutoff First</option>
+                                <option value="cutoff-no">No Cutoff First</option>
+                                <option value="status-valid">Valid First</option>
+                                <option value="status-invalid">Invalid First</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="btnClearFilters" class="btn btn-secondary btn-sm">Clear</button>
+                            <button id="btnExportCSV" class="btn btn-primary btn-sm">📥 Export</button>
+                        </div>
+                    </div>
+
+                    <!-- Entries Table -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Date/Time</th>
+                                    <th>Platform</th>
+                                    <th>Game ID</th>
+                                    <th>WhatsApp</th>
+                                    <th>Numbers</th>
+                                    <th>Draw Date</th>
+                                    <th>Contest</th>
+                                    <th>Ticket #</th>
+                                    <th>Recharge Info</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entriesTableBody">
+                                <tr><td colspan="10" class="text-center text-muted">Loading entries...</td></tr>
+                            </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="pagination">
+                            <div class="pagination-info" id="paginationInfo">Showing 0-0 of 0 entries</div>
+                            <div class="pagination-controls">
+                                <select id="perPageSelect" class="pagination-btn">
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <button id="btnPrevPage" class="pagination-btn" disabled>← Prev</button>
+                                <span id="pageNumbers"></span>
+                                <button id="btnNextPage" class="pagination-btn">Next →</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== RESULTS SECTION ==================== -->
+                <section id="section-results" class="content-section">
+                    <div class="section-anchor"></div>
+                    <h1 class="page-section-title">🎯 Contest Results</h1>
+                    
+                    <!-- Latest Result Card -->
+                    <div class="card mb-4" id="latestResultCard" style="display: none;">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">🎱 Latest Result</h3>
+                                <span class="text-muted" id="latestResultDate">--</span>
+                            </div>
+                            <span class="badge badge-success" id="latestResultContest">--</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="numbers-display" id="latestResultNumbers" style="justify-content: center;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Results Stats -->
+                    <div class="stats-grid mb-4">
+                        <div class="stat-card primary">
+                            <span class="stat-label">Total Results</span>
+                            <span class="stat-value" id="statTotalResults">--</span>
+                        </div>
+                        <div class="stat-card success">
+                            <span class="stat-label">Valid Draws</span>
+                            <span class="stat-value" id="statValidDraws">--</span>
+                        </div>
+                        <div class="stat-card warning">
+                            <span class="stat-label">No Draw</span>
+                            <span class="stat-value" id="statNoDraws">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="filters-row">
+                        <div class="filter-group" style="flex: 1;">
+                            <label>Search Contest</label>
+                            <input type="text" id="searchResults" placeholder="Enter contest number...">
+                        </div>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Contest</th>
+                                        <th>Draw Date</th>
+                                        <th>Winning Numbers</th>
+                                        <th>Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody">
+                                    <tr><td colspan="4" class="text-center text-muted">Loading results...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== WINNERS SECTION ==================== -->
+                <section id="section-winners" class="content-section">
+                    <div class="section-anchor"></div>
+                    <h1 class="page-section-title">🏆 Winners</h1>
+                    
+                    <!-- Winners Stats -->
+                    <div class="stats-grid mb-4">
+                        <div class="stat-card" style="border-left-color: #fbbf24;">
+                            <span class="stat-label">🏆 5 Matches</span>
+                            <span class="stat-value" id="stat5Matches">--</span>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #9ca3af;">
+                            <span class="stat-label">🥈 4 Matches</span>
+                            <span class="stat-value" id="stat4Matches">--</span>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #d97706;">
+                            <span class="stat-label">🥉 3 Matches</span>
+                            <span class="stat-value" id="stat3Matches">--</span>
+                        </div>
+                        <div class="stat-card success">
+                            <span class="stat-label">Total Winners</span>
+                            <span class="stat-value" id="statWinnersTotal">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Winners by Contest Cards -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Winners by Contest</h2>
+                            <span id="prizePoolLabel" class="badge badge-warning"></span>
+                        </div>
+                        <div class="grid-3" id="winnersByContestContainer">
+                            <div class="card"><div class="card-body text-center text-muted">Loading...</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Winners Filters -->
+                    <div class="filters-row mb-4">
+                        <div class="filter-group">
+                            <label>Contest</label>
+                            <select id="filterWinnersContest"><option value="">All</option></select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Matches</label>
+                            <select id="filterWinnersPrizeLevel">
+                                <option value="all">All</option>
+                                <option value="5">5 Matches</option>
+                                <option value="4">4 Matches</option>
+                                <option value="3">3 Matches</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="btnClearWinnersFilters" class="btn btn-secondary btn-sm">Clear</button>
+                            <button id="btnExportWinnersCSV" class="btn btn-primary btn-sm">📥 Export</button>
+                        </div>
+                    </div>
+
+                    <!-- Winners Table -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Matches</th>
+                                        <th>Game ID</th>
+                                        <th>Numbers</th>
+                                        <th>Matched</th>
+                                        <th>Contest</th>
+                                        <th>Draw Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="winnersTableBody">
+                                    <tr><td colspan="6" class="text-center text-muted">Calculating winners...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main> 
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Loading data...</div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" id="loadingProgress"></div>
+        </div>
+    </div>
+
+    <!-- Ticket Details Modal -->
+    <div id="ticketModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content ticket-modal">
+            <div class="modal-header">
+                <h2>Ticket Details</h2>
+                <button class="modal-close" data-close="ticketModal">&times;</button>
+            </div>
+            <div id="ticketModalContent" class="modal-body">
+                <!-- Content populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/admin-core.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data-fetcher.js"></script>
+    <script src="js/results-fetcher.js"></script>
+    <script src="js/data-store.js"></script>
+    <script src="js/recharge-validator.js"></script>
+    <script src="js/winner-calculator.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/unified-page.js"></script>
+</body>
+</html>

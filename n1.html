@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POP-SORTE - Loteria Oficial</title>
+    <link rel="icon" type="image/png" href="media/qui.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pop-sorte.css">
+    <meta property="og:title" content="POP-SORTE - Loteria Oficial" />
+    <meta property="og:description" content="Recarregue, ganhe mais bilhetes e seja um sortudo! Quina Especial da POP. Prêmio diário de R$1000." />
+    <meta property="og:image" content="https://i.ibb.co/PZfHLG3k/qui2.png" />
+    <meta property="og:image:secure_url" content="https://i.ibb.co/PZfHLG3k/qui2.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="300" />
+    <meta property="og:image:height" content="300" />
+    <meta property="og:url" content="https://popsorte.vip/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="POP-SORTE - Loteria Oficial" />
+    <meta name="twitter:description" content="Recarregue, ganhe mais bilhetes e seja um sortudo! Quina Especial da POP. Prêmio diário de R$1000." />
+    <meta name="twitter:image" content="https://i.ibb.co/PZfHLG3k/qui2.png" />
+</head>
+<body class="gogo-compact">
+    <div class="phone-shell">
+        <div class="phone-screen">
+    <section class="results-marquee sticky-marquee">
+        <div class="marquee-content" id="marqueeContent">
+            <div class="marquee-text">
+                <div class="marquee-balls" id="marqueeBalls">
+                    <span class="marquee-loading">CARREGANDO RESULTADOS...</span>
+                </div>
+                📢 Confira o último resultado SÓ NA página do Site Oficial da Caixa: <a href="https://loterias.caixa.gov.br" target="_blank" class="marquee-link">https://loterias.caixa.gov.br</a> ou REDE TV, AO VIVO no YouTube. NINGUÉM SAI DE MÃOS VAZIAS!! 🎁🎁🎁
+            </div>
+        </div>
+    </section>
+    <section class="contest-info sticky-info">
+        <div class="container">
+            <div class="info-card">
+                <div class="info-item">
+                    <div class="info-label">DATA SORTEIO</div>
+                    <div class="info-value" id="drawDate">Carregando...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">CONCURSO</div>
+                    <div class="info-value" id="contestNumber">Carregando...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">TEMPO RESTANTE</div>
+                    <div class="info-value countdown pulse" id="countdown">00:00:00</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="hero-section">
+        <div class="hero-inner" style="padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+            <a href="https://www.youtube.com/@redetv/streams" target="_blank" rel="noopener" style="width: 100%; height: 100%; display: block;">
+                <img 
+                    src="media/Caixa.gif" 
+                    type="image/gif"
+                    style="width: 100%; height: 100%; object-fit: CONTAIN; display: block; cursor: pointer;"
+                    class="caixa-hero-video"
+                    alt="Caixa GIF">
+            </a>
+        </div>
+    </section>
+
+    <section class="selection-section" id="selection">
+        <div class="container">
+            <div class="selection-card">
+                <p class="section-subtitle">Escolha de 5 números dos 80 disponíveis</p>
+
+                <div class="action-buttons">
+                    <button class="btn-secondary btn-emoji" id="btnClearNumbers">
+                        <span class="emoji" aria-hidden="true">🧹</span>
+                        <span class="label">Limpar</span>
+                    </button>
+                    <button class="btn-primary btn-emoji" id="btnSurpresinha">
+                        <span class="emoji" aria-hidden="true">🎲</span>
+                        <span class="label">Surpresinha</span>
+                    </button>
+                </div>
+
+                <div class="selected-display">
+                    <div class="selected-header">
+                        <strong>Números selecionados:</strong>
+                    </div>
+                    <div class="selected-numbers" id="selectedNumbers">
+                        <span class="empty-state">Nenhum número selecionado</span>
+                    </div>
+                    <div class="selected-count" id="selectedCount">0/5 números</div>
+                </div>
+
+                <div class="number-grid" id="numberGrid"></div>
+
+                <button class="submit-button" id="submitBtn">
+                    <span class="button-top">🎫 GERE O BILHETE 🎫</span>
+                </button>
+
+                <div class="spacer-20"></div>
+            
+                <div class="rules-transfer">
+                    <strong>🚨 IMPORTANTE PARA ENTENDER</strong> Você recarrega no mínimo R$10 → ganha 1 bilhete grátis → joga normalmente com seu saldo → e ainda concorre ao prêmio de R$1.000 na loteria.<br><br>👉 1 recarga garante 1 bilhete grátis. <strong>Simples assim.</strong><br>👉 Se você jogar apenas com o bilhete grátis sem fazer recarga antes, o bilhete será inválido.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="rules-section">
+        <div class="rules-container">
+            <div class="info-banner">
+                <h2 class="rules-title">📋 REGRAS,<br>PARTICIPAÇÃO E PREMIAÇÃO</h2>
+                <div class="sabado-bonus">🍀 FÁCIL DE JOGAR, JUSTO E TRANSPARENTE</div>
+            </div>
+                
+            <div class="spacer-10"></div>
+            
+            <div class="rule-item">
+                <strong>1. COMO PARTICIPAR</strong>
+                <ul class="rule-list">
+                    <li>Cada recarga concede 1 bilhete de loteria.</li>
+                    <li>Quanto mais recargas, mais bilhetes e mais chances de ganhar.</li>
+                </ul>
+                
+                <div class="spacer-15"></div>
+
+                <strong>2. REGISTRO DO BILHETE</strong>
+                <p class="rule-paragraph">
+                    Acesse o site, escolha números de 01 a 80 e informe seu ID (POPN1). Bilhete é registrado automaticamente após a recarga.
+                </p>
+                <p class="rule-alert">
+                    📢 Importante: Só valem números registrados no mesmo dia da recarga.
+                    Registros duplicados não contam; vale apenas o primeiro por recarga.
+                </p>
+                
+                <div class="spacer-15"></div>
+
+                <strong>3. HORÁRIO DE VALIDADE DAS APOSTAS</strong>
+                <ul class="rule-list">
+                    <li>Apostas antes das 20:00: sorteio do mesmo dia</li>
+                    <li>Apostas após as 20:00: sorteio do dia seguinte</li>
+                </ul>
+                
+                <div class="spacer-15"></div>
+                
+                <strong>🏆 CONDIÇÕES DE PREMIAÇÃO:</strong>
+                <p>Os números devem coincidir com a Quina oficial. Apenas uma faixa é premiada por sorteio:</p>
+                <ul class="rule-list">
+                    <li>5 números → prêmio máximo</li>
+                    <li>4 números → somente se não houver vencedor de 5 números</li>
+                    <li>3 números → somente se não houver vencedor de 5 ou 4 números</li>
+                    <li>e assim por diante</li>
+                </ul>
+                <p class="rule-alert">
+                    👥 Múltiplos Vencedores: 
+                    Se houver mais de um vencedor na mesma faixa, o prêmio será dividido igualmente.
+                </p>
+                
+                <div class="spacer-15"></div>
+                
+
+                <strong>📊 RESULTADO OFICIAL:</strong>
+                <p class="rule-paragraph">Os resultados seguem a Quina oficial do Brasil.</p>
+                <p class="rule-paragraph rule-link-wrap">
+                    Consulta: <a href="https://loterias.caixa.gov.br" target="_blank" class="rule-link">https://loterias.caixa.gov.br</a>
+                </p>
+                
+                <div class="spacer-15"></div>
+                
+                <div class="sabado-bonus">👉 Resultado: Prêmios máximos entregues todos os dias, 100% garantidos!</div>
+                
+                <div class="spacer-10"></div>
+                
+                <p class="rule-purple">
+                    🎁 ENTREGA DOS PRÊMIOS: Ganhador pode contatar o atendimento ao cliente para receber o prêmio.
+                    A POPN1 também poderá entrar em contato com os vencedores.
+                </p>
+                <div class="rule-note">O evento ocorre diariamente das 20:01 até 19:59 do dia seguinte. Os resultados são baseados no sorteio oficial do governo (Quina).</div>
+            </div>
+
+            <div class="spacer-10"></div>
+            
+            <div class="rules-transfer">
+                <strong>DESCLASSIFICAÇÃO:</strong><br>
+                Haverá desclassificação em caso de fraude, contas múltiplas, informações falsas ou violação das regras.
+                <a href="https://wa.popsorte.vip" class="cta-button-rules">
+                        💬 FALE COM ESPECIALISTA 💬
+                </a>
+                <div class="spacer-10"></div>
+                <div class="vip-cta">
+                    <strong>Entre no grupo VIP oficial e confira os vencedores dos prêmios e presentes!</strong>
+                    <div class="spacer-5"></div>
+                    <div class="tg-buttons">
+                        <a href="https://t.me/+r8QbQP7IGmxjZWUx" class="tg-button" target="_blank" aria-label="Entrar no grupo VIP via Telegram">👆 TELEGRAM</a>
+                        <a href="https://chat.whatsapp.com/LAG7I2qpjVUHVWI7xE3TIc" class="wa-button" target="_blank" aria-label="Entrar no grupo VIP via WhatsApp">👆 WHATSAPP</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="vld-section">
+        <div class="container">
+            <div class="search-highlight">
+                <h3 style="margin-bottom: 8px; color: #374151; font-size: 16px; font-weight: 600;">🔍 Buscar e Consulta de Bilhetes</h3>
+                <input type="text" class="search-box" id="searchBox" placeholder="Digite ID de Jogo ou número do WhatsApp">
+                <p style="margin-top: 8px; font-size: 0.8rem; color: #6b7280; line-height: 1.4;">Como consultar: Busque por <strong>ID de Jogo</strong> ou <strong>número completo do WhatsApp</strong>.</p>
+            </div>
+
+            <div class="filters">
+                <div class="filter-label">Filtros:</div>
+                <div class="filter-buttons">
+                    <button class="filter-btn" data-filter="valid">✅ VÁLIDOS</button>
+                    <button class="filter-btn" data-filter="pending">⏳ EM VERIFICAÇÃO...</button>
+                    <button class="filter-btn" data-filter="invalid">❌ INVÁLIDOS</button>
+                    <button class="filter-btn active" data-filter="all">TODOS</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;"></div>
+
+            <div class="loading" id="loadingState">
+                <div class="spinner"></div>
+                Carregando participações...
+            </div>
+
+            <div class="entries-grid" id="entriesGrid" style="display:none;"></div>
+
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total de Bilhetes</div>
+                </div>
+                <div class="stat-card valid">
+                    <div class="stat-number" id="validCount">0</div>
+                    <div class="stat-label">✅ VÁLIDOS</div>
+                </div>
+                <div class="stat-card invalid">
+                    <div class="stat-number" id="invalidCount">0</div>
+                    <div class="stat-label">❌ INVÁLIDOS</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">⏳ Em verificação...</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                🔒 Privacidade: apenas os últimos 4 dígitos do WhatsApp são exibidos. • Última atualização: <span id="lastUpdate">—</span>
+            </div>
+
+            <div class="pagination" id="paginationControls" style="display:none;">
+                <button id="prevBtn">◀ Anterior</button>
+                <span id="pageInfo" style="font-weight:800;">Página 1 de 1</span>
+                <button id="nextBtn">Próximo ▶</button>
+                <select id="perPageSelect">
+                    <option value="10" selected>10 por página</option>
+                    <option value="25">25 por página</option>
+                    <option value="50">50 por página</option>
+                    <option value="100">100 por página</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section class="vertical-video-section" id="verticalVideoSection">
+        <div class="container">
+            <div class="vertical-video-card">
+                <div class="video-header">
+                    <div class="video-kicker">🎬 PASSO A PASSO EM VÍDEO</div>
+                    <h2 class="video-title">NINGUÉM SAI DE MÃOS VAZIAS!!</h2>
+                    <p class="video-subtitle">Clique em "Como Funciona" para chegar aqui automaticamente</p>
+                </div>
+                <div class="vertical-video-frame">
+                    <video controls playsinline muted loop preload="metadata">
+                        <source src="media/N1--2.mp4" type="video/mp4">
+                        Seu navegador não suporta vídeo.
+                    </video>
+                </div>
+                <div class="spacer-20"></div>
+                <a href="https://wa.popsorte.vip" class="cta-button btn-emoji-hero" target="_blank">
+                    <div class="info-n1">FALE COM ESPECIALISTA</div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="popluz-section">
+        <div class="popluz-container">            
+            <a href="http://popluz.com/" target="_blank" class="popluz-banner-link">
+                <div class="popluz-slider-container">
+                    <div class="popluz-slider-wrapper" id="popluzSlider">
+                        <div class="popluz-slide"><img src="https://i.ibb.co/xt8qmPHp/luz-1.webp" alt="Banner 1"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/mCcFs985/luz-2.webp" alt="Banner 2"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/tTNbHgdQ/luz-3.webp" alt="Banner 3"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/pvP15GVX/luz-4.webp" alt="Banner 4"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/fdpbzgZx/luz-5.webp" alt="Banner 5"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/ccnRfGch/luz-6.webp" alt="Banner 6"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/FLPLqLjd/luz-7.webp" alt="Banner 7"></div>
+                        <div class="popluz-slide"><img src="https://i.ibb.co/xK78HCF0/luz-8.webp" alt="Banner 8"></div>
+                    </div>
+                    
+                    <div class="popluz-dots" id="popluzDots"></div>
+                </div>
+            </a>
+            
+            <div class="popluz-content">
+                <h1 class="popluz-title">PLATAFORMA POPLUZ</h1>
+                <div class="popluz-launched">
+                    <div class="launched-badge">🚀 JÁ DISPONÍVEL!</div>
+                    <a href="https://popluz.com/" class="cta-button btn-emoji-hero cta-popluz" style="margin-top: 10px;">
+                        <div class="info-n1">JOGAR AGORA</div>
+                    </a>
+                </div>
+                
+                <div class="popluz-contacts">
+                    <h3>FALE COM UM MENTOR</h3>
+                    <div class="contact-buttons">
+                        <a href="http://pop-agent.com/tg" class="contact-btn telegram" target="_blank">
+                            Telegram
+                        </a>
+                        <a href="http://pop-agent.com/wa" class="contact-btn whatsapp" target="_blank">
+                            WhatsApp
+                        </a>
+                    </div>
+                </div>
+                <p class="popluz-description">
+                    <br>Com apenas <strong>5 indicações</strong>, você garante <strong>R$223</strong> com 100% de garantia!
+                </p>
+                
+                <div class="popluz-benefits">
+                    <div class="benefit-item">
+                        <span class="benefit-icon">💰</span>
+                        <span>Bônus de indicação a partir de R$30 - Pode ser sacado imediatamente</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">📈</span>
+                        <span>Salário semanal de até R$150.000 (válido a partir de 5 indicações)</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🎯</span>
+                        <span>Bônus de convite de até R$10.000 - Basta 1 depósito para ativar</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">💼</span>
+                        <span>Business Nível VIP até R$20.000 - Quando membros sobem de nível</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">😍</span>
+                        <span>Taxa de agência R$5 por pessoa - Contate mentor para sacar</span>
+                    </div>
+                </div>
+                
+                <p class="popluz-extra">
+                    ✨ E ainda há muitos outros bônus adicionais feitos para beneficiar você!
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div id="userInfoPopup" class="user-info-popup">
+        <div class="user-info-popup-content">
+            <span class="close-popup" id="closePopupBtn">&times;</span>
+            <div class="user-info-popup-body">
+                <!-- Hidden platform selection for JavaScript -->
+                <input type="radio" name="platformChoice" value="POPN1" checked style="display: none;">
+                <div id="platformBadgePopup" style="display: none;">POPN1</div>
+
+                <div class="form-group">
+                    <label class="form-label">ID DO JOGO POPN1</label>
+                    <input type="text" id="gameId" class="form-input" placeholder="Digite 10 dígitos (ex: 3264684583)" maxlength="10" required>
+                    <p class="hint-text">
+                        Digite 10 números do seu ID (ex: 3264684583)
+                    </p>
+                </div>
+
+                <div class="form-group" id="whatsappGroup">
+                    <label class="form-label">NÚMERO DO WHATSAPP</label>
+                    <div class="whatsapp-row">
+                        <div class="whatsapp-prefix">+55</div>
+                        <input type="tel" id="whatsappNumber" class="form-input" placeholder="11999887766" maxlength="13">
+                    </div>
+                    <p class="hint-text">
+                        Digite 10-11 números (ex: 11999887766 ou 1199887766)
+                    </p>
+                </div>
+                
+                <div class="platform-confirm-row">
+                    <button class="submit-button" id="btnConfirmEntry">
+                        ☑️ Confirmado! Gere o bilhete.
+                    </button>
+                </div>
+                
+                <div class="popup-warning">
+                    <div class="warn-icon">⚠️</div>
+                    <div class="warn-body">
+                        <div class="warn-title">ATENÇÃO</div>
+                        <div class="warn-text" id="confirmationWarning">Carregando informações...</div>
+                    </div>
+                </div>
+
+                <div class="spacer-10"></div>
+
+                <div class="rules-transfer">
+                    🍀Não foi dessa vez? A sorte continua! Voce vai receber um presente de agradecimento, e no domingo entra automaticamente no sorteio de um presente entregue na sua casa 🏠🤗<br><br>👇 Entre grupo VIP e confira os vencedores!
+                    <div class="spacer-10"></div>
+                        <div class="tg-buttons">
+                            <a href="https://t.me/+r8QbQP7IGmxjZWUx" class="tg-button" target="_blank" aria-label="Entrar no grupo VIP via Telegram">TELEGRAM</a>
+                            <a href="https://chat.whatsapp.com/LAG7I2qpjVUHVWI7xE3TIc" class="wa-button" target="_blank" aria-label="Entrar no grupo VIP via WhatsApp">WHATSAPP</a>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Announcement Popup -->
+    <div id="winnerPopup" class="winner-popup">
+        <div class="winner-popup-content">
+            <span class="close-popup" id="closeWinnerPopupBtn">&times;</span>
+            <div class="winner-popup-body">
+                <div class="winner-image-container">
+                    <img src="https://linkly.link/2Wshk" alt="Winner Announcement" class="winner-image">
+                </div>
+                <h3 class="winner-popup-title">PARABÉNS AOS VENCEDORES!</h3>
+                <div class="winner-popup-text">
+                    Vencedor da semana passada! Onde você está?<br><br>
+                    <strong>POPLUZ</strong> ou <strong>POPN1</strong>? Ou melhor… as duas 😉<br><br>
+                    <a href="https://wa.PopSorte.vip/vencedor" target="_blank" class="winner-claim-link">
+                        Fale com um Especialista agora mesmo!
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Floating Action Buttons (GOGO compact only) -->
+    <a href="https://wa.popsorte.vip" class="floating-whatsapp" target="_blank">
+        <img src="https://i.ibb.co/0VXng48r/wa.gif" alt="WhatsApp" class="floating-whatsapp-img">
+    </a>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <a href="#" class="nav-item" data-target="home">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="#" class="nav-item" data-target="rules">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Regras</span>
+        </a>
+        <a href="#" class="nav-item popluz-nav popluz-pulse" data-target="popluz">
+            <span class="nav-icon"><img src="https://i.ibb.co/RRgS5GR/wew.gif" alt="POPLUZ"></span>
+            <span class="nav-label"></span>
+        </a>
+        <a href="#" class="nav-item" data-target="search">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Buscar ID</span>
+        </a>
+        <a href="#" class="nav-item" data-target="help">
+            <span class="nav-icon">❓</span>
+            <span class="nav-label">Ajuda</span>
+        </a>
+    </nav>
+        </div>
+    </div>
+    <script src="pop-sorte.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const floatingClear = document.getElementById('floatingClearBtn');
+            const floatingSurpresinha = document.getElementById('floatingSurpresinhaBtn');
+            const originalClear = document.getElementById('btnClearNumbers');
+            const originalSurpresinha = document.getElementById('btnSurpresinha');
+            
+            if (floatingClear && originalClear) {
+                floatingClear.addEventListener('click', function() {
+                    originalClear.click();
+                });
+            }
+            
+            if (floatingSurpresinha && originalSurpresinha) {
+                floatingSurpresinha.addEventListener('click', function() {
+                    originalSurpresinha.click();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

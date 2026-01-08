@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilhete POP-SORTE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #2b1b6f, #32031f, #0f172a);
+            background-size: 280% 280%;
+            animation: heroGradient 6s ease-in-out infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        @keyframes heroGradient {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            body { animation: none; background-position: 50% 50%; }
+        }
+
+        .ticket-wrapper {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Watermark system */
+        .watermark {
+            position: absolute;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: rgba(108, 92, 231, 0.12);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 999;
+            transform: rotate(-45deg);
+            user-select: none;
+            letter-spacing: 2px;
+            text-shadow: 0 0 1px rgba(108, 92, 231, 0.05);
+        }
+        .watermark-1  { top: 0%;   left: 0%;   }
+        .watermark-2  { top: 0%;   left: 33%;  }
+        .watermark-3  { top: 0%;   left: 66%;  }
+        .watermark-4  { top: 14%;  left: 16%;  }
+        .watermark-5  { top: 14%;  left: 50%;  }
+        .watermark-6  { top: 14%;  left: 83%;  }
+        .watermark-7  { top: 28%;  left: 0%;   }
+        .watermark-8  { top: 28%;  left: 33%;  }
+        .watermark-9  { top: 28%;  left: 66%;  }
+        .watermark-10 { top: 42%;  left: 16%;  }
+        .watermark-11 { top: 42%;  left: 50%;  }
+        .watermark-12 { top: 42%;  left: 83%;  }
+        .watermark-13 { top: 56%;  left: 0%;   }
+        .watermark-14 { top: 56%;  left: 33%;  }
+        .watermark-15 { top: 56%;  left: 66%;  }
+        .watermark-16 { top: 70%;  left: 16%;  }
+        .watermark-17 { top: 70%;  left: 50%;  }
+        .watermark-18 { top: 70%;  left: 83%;  }
+        .watermark-19 { top: 84%;  left: 0%;   }
+        .watermark-20 { top: 84%;  left: 33%;  }
+        .watermark-21 { top: 84%;  left: 66%;  }
+        .watermark-22 { top: 98%;  left: 16%;  }
+        .watermark-23 { top: 98%;  left: 50%;  }
+        .watermark-24 { top: 98%;  left: 83%;  }
+
+        .ticket-content { position: relative; z-index: 1; }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 15px;
+            border-bottom: 3px dashed #dfe6e9;
+        }
+        .ticket-title {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #2d3436;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .official-badge, .bilhete-badge {
+            background: linear-gradient(135deg, #f7e6b8 0%, #eaca7a 25%, #d6a63a 50%,#c18526 75%, #e3bf73 100%);
+            color: #2d1a05;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1000;
+        }
+        .bilhete-badge {
+            letter-spacing: 0.06em;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+            width: 100%;
+            justify-items: center;
+            align-items: center;
+            text-align: center;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            width: 100%;
+        }
+        .info-label {
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #2d3436;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            line-height: 1.3;
+        }
+        #whatsappNumber { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.3px; }
+
+        .countdown-section {
+            background: linear-gradient(135deg, #fff7ed, #fef3c7);
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 18px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+        .countdown-label {
+            font-size: 0.8rem;
+            color: #92400e;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .countdown-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #b45309;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .numbers-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+        .numbers-title {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .numbers-grid {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Homepage ball styles */
+        .number-badge {
+            color: #fff;
+            padding: 0;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            box-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.25),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            position: relative;
+        }
+        .number-badge::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 35%;
+            height: 25%;
+            background: rgba(255, 255, 255, 0.4);
+            filter: blur(3px);
+            pointer-events: none;
+            border-radius: 50%;
+        }
+        .number-badge.ball-color-1 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .number-badge.ball-color-2 { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+        .number-badge.ball-color-3 { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); }
+        .number-badge.ball-color-4 { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+        .number-badge.ball-color-5 { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+        .number-badge.ball-color-6 { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .number-badge.ball-color-7 { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .number-badge.ball-color-8 { background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%); }
+        .number-badge.ball-color-9 { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+        .number-badge.ball-color-0 { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+
+        .number-order { display: none !important; }
+
+        .number-text {
+            font-size: 1.15rem;
+            font-weight: 900;
+            margin-top: 6px;
+        }
+
+        .rules-section {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+        .rules-title {
+            font-size: 0.85rem;
+            color: #1e293b;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .rules-text {
+            font-size: 0.78rem;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fff7ed, #fef3c7);
+            border-left: 4px solid #f59e0b;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+        .warning-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #92400e;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .warning-text {
+            font-size: 0.78rem;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        /* Validation highlight – eye-catching card */
+        .validation-highlight {
+        margin: 18px 0;
+        padding: 18px 18px 16px;
+        border-radius: 14px;
+        border: 2px solid #f59e0b;
+        background: radial-gradient(circle at 20% 20%, #fffaf0 0%, #fff3d6 45%, #ffe7b0 100%);
+        box-shadow:
+            0 10px 25px rgba(245, 158, 11, 0.25),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        color: #7a3b00;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        position: relative;
+        overflow: hidden;
+        }
+
+        .validation-highlight::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: 16px;
+        padding: 2px;
+        background: linear-gradient(120deg, #f59e0b, #facc15, #f97316, #f59e0b);
+        background-size: 300% 300%;
+        animation: glowSweep 6s linear infinite;
+        z-index: 0;
+        mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+        -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        -webkit-mask-composite: xor;
+        }
+
+        .validation-highlight .vh-content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 10px;
+        }
+
+        .validation-highlight .vh-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        }
+
+        .validation-highlight .vh-icon {
+        font-size: 1.2rem;
+        line-height: 1;
+        color: #b45309;
+        }
+
+        .validation-highlight .vh-text {
+        flex: 1;
+        }
+
+        .validation-highlight .vh-strong {
+        font-weight: 900;
+        color: #b45309;
+        }
+
+        .validation-highlight .vh-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #facc15, #f59e0b);
+        color: #2d1a05;
+        font-weight: 800;
+        font-size: 0.82rem;
+        letter-spacing: 0.2px;
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
+        }
+
+        .validation-highlight a {
+        color: #b45309;
+        font-weight: 800;
+        text-decoration: underline;
+        }
+
+        @keyframes glowSweep {
+        0%   { background-position: 0% 50%; }
+        100% { background-position: 300% 50%; }
+        }
+
+        .download-button, .back-button {
+            width: 100%;
+            padding: 13px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .download-button {
+            background: linear-gradient(135deg, #6c2bd9, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 43, 217, 0.3);
+        }
+        .download-button:hover {
+            background: linear-gradient(135deg, #5b23b8, #7c4ce6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(108, 43, 217, 0.4);
+        }
+        .back-button {
+            background: linear-gradient(135deg, #10b981, #14b8a6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #059669, #0d9488);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .datetime-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .datetime-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .datetime-label {
+            font-size: 0.65rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .datetime-value {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #2d3436;
+        }
+
+        @media (max-width: 640px) {
+            .ticket-wrapper { padding: 20px; }
+            .ticket-title { font-size: 1.3rem; }
+            .number-badge { width: 50px; height: 50px; }
+            .number-text { font-size: 1.05rem; }
+            .countdown-value { font-size: 1.7rem; }
+        }
+
+/* Mobile Bottom Navigation */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-height: 60px;
+  min-width: 60px;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+.mobile-nav .nav-item:hover,
+.mobile-nav .nav-item.active {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.mobile-nav .nav-icon {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+.mobile-nav .nav-label {
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Hide on desktop */
+@media (min-width: 768px) {
+  .mobile-nav {
+    display: none;
+  }
+}
+
+.floating-whatsapp {
+  position: fixed;
+  bottom: 120px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  animation: whatsappPulse 2s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.floating-whatsapp:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+}
+
+@keyframes whatsappPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(37, 211, 102, 0.5);
+  }
+}
+
+.floating-whatsapp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Mobile adjustments for floating WhatsApp */
+@media (max-width: 640px) {
+  .floating-whatsapp {
+    width: 56px;
+    height: 56px;
+    bottom: 110px;
+    right: 20px;
+  }
+}
+    </style>
+</head>
+<body>
+    <div class="ticket-wrapper" id="ticketContainer">
+        <div class="watermark watermark-1">POP SORTE</div>
+        <div class="watermark watermark-2">VALIDO</div>
+        <div class="watermark watermark-3">OFICIAL</div>
+        <div class="watermark watermark-4">POP SORTE</div>
+        <div class="watermark watermark-5">POP SORTE</div>
+        <div class="watermark watermark-6">VALIDO</div>
+        <div class="watermark watermark-7">OFICIAL</div>
+        <div class="watermark watermark-8">POP SORTE</div>
+        <div class="watermark watermark-9">POP SORTE</div>
+        <div class="watermark watermark-10">VALIDO</div>
+        <div class="watermark watermark-11">OFICIAL</div>
+        <div class="watermark watermark-12">POP SORTE</div>
+        <div class="watermark watermark-13">POP SORTE</div>
+        <div class="watermark watermark-14">VALIDO</div>
+        <div class="watermark watermark-15">OFICIAL</div>
+        <div class="watermark watermark-16">POP SORTE</div>
+        <div class="watermark watermark-17">POP SORTE</div>
+        <div class="watermark watermark-18">VALIDO</div>
+        <div class="watermark watermark-19">OFICIAL</div>
+        <div class="watermark watermark-20">POP SORTE</div>
+        <div class="watermark watermark-21">POP SORTE</div>
+        <div class="watermark watermark-22">VALIDO</div>
+        <div class="watermark watermark-23">OFICIAL</div>
+        <div class="watermark watermark-24">POP SORTE</div>
+
+        <div class="ticket-content">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div class="bilhete-badge" id="bilheteBadge">1º BILHETE</div>
+            </div>
+
+            <div class="ticket-header">
+                <div class="ticket-title">BILHETE QUINA</div>
+                <div class="official-badge" id="platformBadge">✓ POPN1</div>
+            </div>
+
+            <div class="numbers-section">
+                <div class="numbers-title">NÚMEROS SELECIONADOS</div>
+                <div class="numbers-grid" id="numbersDisplay"></div>
+            </div>
+
+            <div class="countdown-section">
+                <div class="countdown-label">⏰ TEMPO PARA SORTEIO</div>
+                <div class="countdown-value" id="drawCountdown">Calculando...</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-label">🎰 CONCURSO</div>
+                    <div class="info-value" id="concursoNumber">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">📅 DATA DO SORTEIO</div>
+                    <div class="info-value" id="sorteioDate">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">👤 ID DO JOGO</div>
+                    <div class="info-value" id="gameId">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">🏢 PLATAFORMA</div>
+                    <div class="info-value" id="platformName">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">📱 WHATSAPP</div>
+                    <div class="info-value" id="whatsappNumber">-</div>
+                </div>
+            </div>
+
+            <div class="validation-highlight" id="validationHighlight">
+                <div class="vh-content">
+                    <div class="vh-row">
+                    <div class="vh-badge">⏳ Em verificação...</div>
+                    </div>
+
+                    <div class="vh-row">
+                    <div class="vh-icon">🎟️</div>
+                    <div class="vh-text">
+                        <span class="vh-strong">Você gerou um bilhete com sucesso.</span><br>
+                        Ele será validado em breve e atualizado em tempo real em
+                        <a href="https://PopSorte.vip/" target="_blank" rel="noopener">https://PopSorte.vip/</a>.
+                    </div>
+                    </div>
+
+                    <div class="vh-row">
+                    <div class="vh-icon">💡</div>
+                    <div class="vh-text">
+                        Lembre-se: 1 recarga, 1 Quina bilhete grátis. Mais recargas, mais bilhetes! Boa sorte! ☘️
+                    </div>
+                    </div>
+
+                    <div class="vh-row">
+                    <div class="vh-icon">💬</div>
+                    <div class="vh-text">
+                        Em caso de dúvidas, entre em contato com o suporte:
+                        <a href="https://wa.PopSorte.vip" target="_blank" rel="noopener">wa.PopSorte.vip</a>
+                    </div>
+                    </div>
+
+                    <div class="vh-row">
+                    <div class="vh-icon">🎁</div>
+                    <div class="vh-text">
+                        <strong>NINGUÉM SAI DE MÃOS VAZIAS!!</strong>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rules-section">
+                <div class="rules-title">📋 REGRAS E PREMIAÇÃO</div>
+                <div class="rules-text">
+                    <strong style="color: #6c2bd9;">1. COMO PARTICIPAR</strong><br>
+                    • Cada recarga concede 1 bilhete de loteria<br>
+                    • Quanto mais recargas, mais bilhetes e mais chances de ganhar<br><br>
+                    
+                    <strong style="color: #6c2bd9;">2. REGISTRO DO BILHETE</strong><br>
+                    Acesse o site, escolha números de 01 a 80 e informe seu ID (POPN1). Bilhete é registrado automaticamente após a recarga.<br>
+                    <span style="font-weight: 700; color: #ec1212;">⚠️ Importante: Só valem números registrados no mesmo dia da recarga. Registros duplicados não contam; vale apenas o primeiro por recarga.</span><br><br>
+                    
+                    <strong style="color: #6c2bd9;">3. HORÁRIO DE VALIDADE</strong><br>
+                    • Apostas antes das 20:00: sorteio do mesmo dia<br>
+                    • Apostas após as 20:00: sorteio do dia seguinte<br><br>
+                    
+                    <strong style="color: #6c2bd9;">4. PREMIAÇÃO</strong><br>
+                    Os números devem coincidir com a Quina oficial:<br>
+                    • 5 números → prêmio máximo<br>
+                    • 4 números → somente se não houver vencedor de 5<br>
+                    • 3 números → somente se não houver vencedor de 5 ou 4<br>
+                    <span style="font-weight: 700; color: #ec1212;">💥 Múltiplos Vencedores: Se houver mais de um vencedor, o prêmio será dividido igualmente.</span><br><br>
+                    
+                    <strong style="color: #6c2bd9;">5. RESULTADO OFICIAL</strong><br>
+                    Consulta: <a href="https://loterias.caixa.gov.br" target="_blank" style="color: #6c2bd9; font-weight: 800;">loterias.caixa.gov.br</a><br><br>
+                    
+                    🎁 <strong style="color: #10b981;">ENTREGA: Ganhador pode contatar o atendimento. A plataforma também entrará em contato com vencedores.</strong>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-title">
+                    <span>⏰</span>
+                    <span>ATENÇÃO:</span>
+                </div>
+                <div class="warning-text">
+                    Apostas antes das 20:00 são válidas para o sorteio do mesmo dia. Apostas após 20:00 são válidas para o sorteio do dia seguinte. <strong>Haverá desclassificação em caso de fraude, contas múltiplas, informações falsas ou violação das regras.</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="download-button" onclick="downloadTicket()" style="margin-bottom: 0;">
+                    📥 BAIXAR
+                </button>
+                <button class="back-button" onclick="window.location.href='https://popsorte.vip/'" style="margin-bottom: 0;">
+                    🏠 VOLTAR
+                </button>
+            </div>
+
+            <div class="datetime-grid">
+                <div class="datetime-item">
+                    <div class="datetime-label">Horário de Registro</div>
+                    <div class="datetime-value" id="generateTime">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                gameId: params.get('gameId') || '-',
+                whatsapp: params.get('whatsapp') || '-',
+                numbers: params.get('numbers') || '',
+                generateTime: params.get('time') || '-',
+                sorteioDate: params.get('date') || '-',
+                bilhete: params.get('bilhete') || '1',
+                concurso: params.get('concurso') || '-',
+                platform: (params.get('platform') || 'POPN1').toUpperCase()
+            };
+        }
+
+        function populateTicket() {
+            const data = getUrlParams();
+
+            document.getElementById('gameId').textContent = data.gameId;
+            document.getElementById('whatsappNumber').textContent = data.whatsapp;
+            document.getElementById('generateTime').textContent = data.generateTime;
+            document.getElementById('platformName').textContent = data.platform;
+            document.getElementById('platformBadge').textContent = `✓ ${data.platform}`;
+
+            const dateParts = data.sorteioDate.split(' ');
+            const day = dateParts[0];
+            const monthName = dateParts[2]?.toLowerCase?.() || '';
+            const year = dateParts[4];
+
+            const months = {
+                'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
+                'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
+                'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
+            };
+
+            const formattedDate = months[monthName]
+                ? `${day}-${months[monthName]}-${year} às 21h`
+                : data.sorteioDate;
+            document.getElementById('sorteioDate').textContent = formattedDate;
+            document.getElementById('concursoNumber').textContent = data.concurso;
+            document.getElementById('bilheteBadge').textContent = data.bilhete + 'º BILHETE';
+
+            if (data.numbers) {
+                const numbersArray = data.numbers.split(',');
+                const numbersContainer = document.getElementById('numbersDisplay');
+                numbersContainer.innerHTML = '';
+
+                numbersArray.forEach((num, index) => {
+                    const clean = num.trim();
+                    const lastDigit = parseInt(clean, 10) % 10;
+
+                    const box = document.createElement('div');
+                    box.className = `number-badge ball-color-${lastDigit}`;
+
+                    const orderSpan = document.createElement('span');
+                    orderSpan.className = 'number-order';
+                    orderSpan.textContent = (index + 1) + 'º';
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'number-text';
+                    valueSpan.textContent = clean;
+
+                    box.appendChild(orderSpan);
+                    box.appendChild(valueSpan);
+                    numbersContainer.appendChild(box);
+                });
+            }
+        }
+
+        function startDrawCountdown() {
+            const data = getUrlParams();
+            const sorteioDateStr = data.sorteioDate;
+            const months = {
+                'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5,
+                'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
+            };
+
+            const parts = sorteioDateStr.split(' ');
+            const day = parseInt(parts[0]);
+            const monthName = parts[2]?.toLowerCase?.();
+            const year = parseInt(parts[4]);
+            const drawDate = (monthName in months && !Number.isNaN(day) && !Number.isNaN(year))
+                ? new Date(year, months[monthName], day, 21, 0, 0)
+                : null;
+
+            function updateCountdown() {
+                if (!drawDate) {
+                    document.getElementById('drawCountdown').textContent = 'Data inválida';
+                    return;
+                }
+                const now = new Date();
+                const spTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+                const diff = drawDate - spTime;
+
+                if (diff <= 0) {
+                    document.getElementById('drawCountdown').textContent = 'SORTEIO REALIZADO!';
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                const countdownText = days > 0
+                    ? `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                    : `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                document.getElementById('drawCountdown').textContent = countdownText;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        async function downloadTicket() {
+            const ticketContainer = document.getElementById('ticketContainer');
+
+            try {
+                const canvas = await html2canvas(ticketContainer, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                });
+
+                const link = document.createElement('a');
+                const data = getUrlParams();
+                link.download = `pop-sorte-bilhete-${data.concurso}-${data.bilhete}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                console.log('✅ Bilhete baixado!');
+            } catch (error) {
+                console.error('Erro ao baixar:', error);
+                alert('Erro ao baixar bilhete. Tente novamente!');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            populateTicket();
+            startDrawCountdown();
+            setTimeout(downloadTicket, 1000); // Auto-download after 1s
+        });
+    </script>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <a href="/" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="/" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Regras</span>
+        </a>
+        <a href="/" class="nav-item">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Buscar</span>
+        </a>
+        <a href="/" class="nav-item">
+            <span class="nav-icon">❓</span>
+            <span class="nav-label">Ajuda</span>
+        </a>
+    </nav>
+</body>
+</html>

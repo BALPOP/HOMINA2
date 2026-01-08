@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pop Sorte Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="app-shell">
+    <script src="auth.js"></script>
+    <script>ensureAuthenticated();</script>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-mark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">Q2</div>
+            <div>
+                <p class="eyebrow">Admin</p>
+                <strong>Operations</strong>
+            </div>
+        </div>
+        <div class="sidebar-section">
+            <p class="sidebar-label">Overview</p>
+            <a href="#" data-page="dashboard" class="nav-link active">Dashboard</a>
+        </div>
+        <div class="sidebar-section">
+            <p class="sidebar-label">Operations</p>
+            <a href="#" data-page="entries" class="nav-link">Entries</a>
+            <a href="#" data-page="results" class="nav-link">Results</a>
+            <a href="#" data-page="winners" class="nav-link">Winners</a>
+        </div>
+        <div class="sidebar-footer">
+            <button class="btn-ghost logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <div class="topbar">
+            <div>
+                <p class="eyebrow">Admin Console <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-left: 8px; letter-spacing: 0.5px;">v2.0 PLATFORM FIX</span></p>
+                <h1 id="pageTitle">Operations Dashboard</h1>
+                <p class="muted" id="accountBanner">Logged in as: —</p>
+            </div>
+            <div class="actions-row">
+                <div id="dataStatus" class="data-status" style="font-size: 12px; color: var(--muted); margin-right: 10px;">
+                    <span id="statusIndicator">⏳</span> <span id="lastUpdateText">Loading...</span>
+                </div>
+                <button id="refreshBtn" class="btn-refresh">🔄 Refresh</button>
+                <button class="btn-danger ghost" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- ===================== DASHBOARD PAGE ===================== -->
+        <main class="content page-section" id="page-dashboard">
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
+            <div id="loadingIndicator" class="loading">
+                <div class="loading-spinner"></div>
+                <div id="loadingText">Initializing dashboard...</div>
+                <div id="loadingProgress" class="loading-progress" style="display: none;">
+                    <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Overview</p>
+                        <h2>ALL TIME DATA</h2>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card tone-primary">
+                        <div class="stat-label">Total Tickets Generated</div>
+                        <div class="stat-number" id="totalEntries">0</div>
+                    </div>
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">POPLUZ Tickets</div>
+                        <div class="stat-number" id="popluzEntries">0</div>
+                    </div>
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">POPN1 Tickets</div>
+                        <div class="stat-number" id="popn1Entries">0</div>
+                    </div>
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">Total "CONCURSO"</div>
+                        <div class="stat-number" id="uniqueContests">0</div>
+                    </div>
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">Total Draw Dates</div>
+                        <div class="stat-number" id="uniqueDrawDates">0</div>
+                    </div>
+                    <div class="stat-card tone-neutral">
+                        <div class="stat-label">Pending Entries</div>
+                        <div class="stat-number" id="pendingEntries">0</div>
+                    </div>
+                    <div class="stat-card tone-green">
+                        <div class="stat-label">Total Winners</div>
+                        <div class="stat-number" id="totalWinners">0</div>
+                    </div>
+                    <div class="stat-card tone-green">
+                        <div class="stat-label">POPLUZ Winners</div>
+                        <div class="stat-number" id="popluzWinners">0</div>
+                    </div>
+                    <div class="stat-card tone-green">
+                        <div class="stat-label">POPN1 Winners</div>
+                        <div class="stat-number" id="popn1Winners">0</div>
+                    </div>
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">Est. Win Rate</div>
+                        <div class="stat-number" id="winRate">0%</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Recharge & Participation</p>
+                        <h2>Engagement Overview</h2>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card tone-blue">
+                        <div class="stat-label">Total Member that Recharge</div>
+                        <div class="stat-number" id="statRechargers">0</div>
+                    </div>
+                    <div class="stat-card tone-green">
+                        <div class="stat-label">Total Recharge Member that Participate</div>
+                        <div class="stat-number" id="statParticipants">0</div>
+                    </div>
+                    <div class="stat-card tone-warning">
+                        <div class="stat-label">Recharged no tickets</div>
+                        <div class="stat-number" id="statNoTickets">0</div>
+                    </div>
+                    <div class="stat-card tone-neutral">
+                        <div class="stat-label">Est. Participation rate</div>
+                        <div class="stat-number" id="statParticipationRate">0%</div>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top:16px; background:#f8fafc;">
+                    <div class="section-header" style="margin-bottom:8px;">
+                        <div>
+                            <p class="eyebrow">Participation breakdown</p>
+                            <h3 style="margin:0;">Recharge vs Ticket Summary</h3>
+                        </div>
+                    </div>
+                    <div class="mini-grid" id="participationBreakdown">
+                        <div class="mini-stat"><span>Total Member that Recharge</span><strong id="pbRechargers">0</strong></div>
+                        <div class="mini-stat"><span>Total Recharge Member that Participate</span><strong id="pbParticipants">0</strong></div>
+                        <div class="mini-stat"><span>Recharged no ticket</span><strong id="pbNoTicket">0</strong></div>
+                        <div class="mini-stat"><span>Participation rate</span><strong id="pbRate">0%</strong></div>
+                        <div class="mini-stat"><span>Multi-recharge no ticket</span><strong id="pbMultiNoTicket">0</strong></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Trends</p>
+                        <h2>Last 7 Days Statistics</h2>
+                    </div>
+                    <div class="actions-row">
+                        <select id="chartMetricSelect" class="filter-item" style="width: auto; padding: 6px 12px;">
+                            <option value="entries">Total Entries (Tickets)</option>
+                            <option value="rechargers">Unique Rechargers</option>
+                            <option value="participants">Unique Participants</option>
+                            <option value="noTicket">Recharged No Ticket</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="entriesVolumeChart" class="comparison-chart" style="padding: 10px 0; height: 300px; position: relative;">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Daily clarity</p>
+                        <h2>Last 7 Days – Recharge vs Tickets</h2>
+                    </div>
+                </div>
+                <div class="table-container compact">
+                    <table>
+                        <colgroup>
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 160px;">
+                            <col style="min-width: 170px;">
+                            <col style="min-width: 150px;">
+                            <col style="min-width: 170px;">
+                            <col style="min-width: 140px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Rechargers (unique)</th>
+                                <th>Ticket creators (unique)</th>
+                                <th>Recharged no ticket</th>
+                                <th>Participation %</th>
+                                <th>Non-participation %</th>
+                                <th>Total tickets</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyParticipationBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Outcomes</p>
+                        <h2>Winners by Contest</h2>
+                    </div>
+                </div>
+                <div id="contestWinnersBreakdown"></div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Players</p>
+                        <h2>Top Entrants</h2>
+                    </div>
+                </div>
+                <div class="table-container compact">
+                    <table id="topPlayersTable">
+                        <colgroup>
+                            <col style="width: 60px;">
+                            <col style="width: 160px;">
+                            <col style="width: 120px;">
+                            <col style="width: 120px;">
+                            <col style="width: 120px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>WhatsApp</th>
+                                <th>Total Entries</th>
+                                <th>Total Wins</th>
+                                <th>Best Prize</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topPlayersTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Entries</p>
+                        <h2>Latest Entries</h2>
+                    </div>
+                </div>
+                <div class="table-container compact">
+                    <table id="recentEntriesTable">
+                        <colgroup>
+                            <col style="min-width: 150px;">
+                            <col style="min-width: 110px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 170px;">
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 100px;">
+                            <col style="min-width: 100px;">
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 120px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Registration</th>
+                                <th>Platform</th>
+                                <th>Game ID</th>
+                                <th>WhatsApp</th>
+                                <th>Chosen Numbers</th>
+                                <th>Draw Date</th>
+                                <th>Contest</th>
+                                <th>Ticket #</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentEntriesBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- ===================== ENTRIES PAGE ===================== -->
+        <main class="content page-section" id="page-entries" style="display: none;">
+            <div id="entriesLoadingIndicator" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <div>Loading entries...</div>
+            </div>
+            <div id="entriesErrorMessage" class="error-message" style="display: none;"></div>
+
+            <div class="section" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                <div class="section-header" style="margin-bottom: 8px;">
+                    <div>
+                        <p class="eyebrow">Recharge Data</p>
+                        <h2>Validation Status</h2>
+                    </div>
+                </div>
+                <p class="muted" style="margin-bottom: 12px;">Recharge data is fetched from the Google Sheet for real-time validation.</p>
+                <div class="mini-grid">
+                    <div class="mini-stat"><span>Status</span><strong id="rechargeStatus">Loading...</strong></div>
+                    <div class="mini-stat"><span>Last update</span><strong id="rechargeLastUpdate">—</strong></div>
+                </div>
+            </div>
+
+            <div id="validationStats" class="stats-grid" style="display: none;">
+                <div class="stat-card tone-green">
+                    <div class="stat-label">Valid Tickets</div>
+                    <div class="stat-number" id="validCount">0</div>
+                </div>
+                <div class="stat-card tone-danger">
+                    <div class="stat-label">Invalid Tickets</div>
+                    <div class="stat-number" id="invalidCount">0</div>
+                </div>
+                <div class="stat-card tone-warning">
+                    <div class="stat-label">Cutoff Shifts</div>
+                    <div class="stat-number" id="cutoffCount">0</div>
+                </div>
+                <div class="stat-card tone-blue">
+                    <div class="stat-label">Total Recharges</div>
+                    <div class="stat-number" id="totalRecharges">0</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Entries</p>
+                        <h2>All Lottery Entries</h2>
+                    </div>
+                </div>
+                
+                <div class="filter-section">
+                    <h3>Filters</h3>
+                    <div class="filter-grid">
+                        <div class="filter-item">
+                            <label>Platform</label>
+                            <select id="filterPlatform">
+                                <option value="">All Platforms</option>
+                                <option value="POPLUZ">POPLUZ</option>
+                                <option value="POPN1">POPN1</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Game ID</label>
+                            <input type="text" id="filterGameId" placeholder="Search Game ID">
+                        </div>
+                        <div class="filter-item">
+                            <label>WhatsApp</label>
+                            <input type="text" id="filterWhatsApp" placeholder="Search WhatsApp">
+                        </div>
+                        <div class="filter-item">
+                            <label>Contest</label>
+                            <select id="filterContest">
+                                <option value="">All Contests</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Draw Date</label>
+                            <select id="filterDrawDate">
+                                <option value="">All Dates</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Validity</label>
+                            <select id="filterValidity">
+                                <option value="">All</option>
+                                <option value="VALID">Valid Only</option>
+                                <option value="INVALID">Invalid Only</option>
+                                <option value="UNKNOWN">Unknown</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Cutoff Flag</label>
+                            <select id="filterCutoff">
+                                <option value="">All</option>
+                                <option value="true">Flagged Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button id="applyFiltersBtn" class="btn-primary">Apply Filters</button>
+                        <button id="clearFiltersBtn" class="btn-warning">Clear Filters</button>
+                        <button id="exportBtn" class="btn-success">Export to CSV</button>
+                    </div>
+                </div>
+
+                <div class="table-container compact">
+                    <table id="entriesTable">
+                        <colgroup>
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 150px;">
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 160px;">
+                            <col style="min-width: 170px;">
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 100px;">
+                            <col style="min-width: 160px;">
+                            <col style="min-width: 120px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th data-sort="validity">Validity ↕</th>
+                                <th data-sort="registrationDate">Date ↕</th>
+                                <th data-sort="registrationTime">Time ↕</th>
+                                <th data-sort="platform">Platform ↕</th>
+                                <th data-sort="gameId">Game ID ↕</th>
+                                <th data-sort="whatsapp">WhatsApp ↕</th>
+                                <th data-sort="chosenNumbers">Chosen Numbers</th>
+                                <th data-sort="drawDate">Draw Date ↕</th>
+                                <th data-sort="contest">Contest ↕</th>
+                                <th data-sort="ticketNumber">Ticket # ↕</th>
+                                <th>Recharge Info</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button id="prevPageBtn">Previous</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button id="nextPageBtn">Next</button>
+                    <select id="perPageSelect">
+                        <option value="25">25 per page</option>
+                        <option value="50" selected>50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="disputeModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>🔍 Ticket Validity Details</h2>
+                        <span class="close-modal" onclick="document.getElementById('disputeModal').classList.remove('active')">&times;</span>
+                    </div>
+                    <div id="disputeContent"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ===================== RESULTS PAGE ===================== -->
+        <main class="content page-section" id="page-results" style="display: none;">
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Fonte: RESULT sheet (read-only)</p>
+                        <h2>Contest Results</h2>
+                    </div>
+                </div>
+                
+                <div class="table-container compact">
+                    <table id="resultsTable">
+                        <colgroup>
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 200px;">
+                            <col style="min-width: 180px;">
+                            <col style="min-width: 140px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Contest</th>
+                                <th>Draw Date</th>
+                                <th>Winning Numbers</th>
+                                <th>Saved At</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- ===================== WINNERS PAGE ===================== -->
+        <main class="content page-section" id="page-winners" style="display: none;">
+            <div id="winnersLoadingIndicator" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <div>Loading winners...</div>
+            </div>
+            <div id="winnersErrorMessage" class="error-message" style="display: none;"></div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Live winners (RESULT sheet)</p>
+                        <h2>Winners Summary</h2>
+                    </div>
+                </div>
+                <div class="stats-grid" id="summaryGrid">
+                    <div class="stat-card tone-gold">
+                        <div class="stat-label">🏆 5 acertos</div>
+                        <div class="stat-number" id="sum5">0</div>
+                    </div>
+                    <div class="stat-card tone-silver">
+                        <div class="stat-label">🥈 4 acertos</div>
+                        <div class="stat-number" id="sum4">0</div>
+                    </div>
+                    <div class="stat-card tone-bronze">
+                        <div class="stat-label">🥉 3 acertos</div>
+                        <div class="stat-number" id="sum3">0</div>
+                    </div>
+                    <div class="stat-card tone-green">
+                        <div class="stat-label">🎯 2 acertos</div>
+                        <div class="stat-number" id="sum2">0</div>
+                    </div>
+                    <div class="stat-card tone-neutral">
+                        <div class="stat-label">✨ 1 acerto</div>
+                        <div class="stat-number" id="sum1">0</div>
+                    </div>
+                    <div class="stat-card tone-primary">
+                        <div class="stat-label">Total premiados</div>
+                        <div class="stat-number" id="sumTotal">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="ticketCreatorsSection">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Ticket creators (unique)</p>
+                        <h2>Today vs Yesterday</h2>
+                        <p class="muted" style="margin-top: 6px;">Unique game IDs that created ≥ 1 ticket on that day. Window: last 7 days only.</p>
+                    </div>
+                </div>
+                <div id="ticketCreatorsChart" class="comparison-chart" style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="chart-bars" style="display:flex; gap:14px; align-items:flex-end; min-height:120px;">
+                        <div class="bar" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                            <div class="bar-outer" style="width:100%; background:#e5e7eb; border-radius:8px; height:100px; display:flex; align-items:flex-end;">
+                                <div id="todayBarFill" style="width:100%; background:linear-gradient(180deg,#1e3c72,#2a5298); border-radius:8px; height:0%; transition:height 0.3s ease;"></div>
+                            </div>
+                            <div class="bar-label" style="text-align:center;">
+                                <div id="todayCount" style="font-weight:700; font-size:18px;">0</div>
+                                <div class="muted" style="font-size:13px;">Today</div>
+                            </div>
+                        </div>
+                        <div class="bar" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                            <div class="bar-outer" style="width:100%; background:#e5e7eb; border-radius:8px; height:100px; display:flex; align-items:flex-end;">
+                                <div id="yesterdayBarFill" style="width:100%; background:linear-gradient(180deg,#6b7280,#9ca3af); border-radius:8px; height:0%; transition:height 0.3s ease;"></div>
+                            </div>
+                            <div class="bar-label" style="text-align:center;">
+                                <div id="yesterdayCount" style="font-weight:700; font-size:18px;">0</div>
+                                <div class="muted" style="font-size:13px;">Yesterday</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="muted" style="font-size:13px;">Counts are unique game IDs with ≥ 1 ticket on that date (last 7 days window).</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Filters</p>
+                        <h2>Filter Winners</h2>
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <div class="filter-grid">
+                        <div class="filter-item">
+                            <label>Platform</label>
+                            <select id="winnersFilterPlatform">
+                                <option value="">All Platforms</option>
+                                <option value="POPLUZ">POPLUZ</option>
+                                <option value="POPN1">POPN1</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Contest</label>
+                            <select id="winnersFilterContest">
+                                <option value="">All Contests</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Draw Date</label>
+                            <select id="winnersFilterDrawDate">
+                                <option value="">All Dates</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>Prize Level</label>
+                            <select id="filterPrizeTier">
+                                <option value="">All</option>
+                                <option value="5">5 matches</option>
+                                <option value="4">4 matches</option>
+                                <option value="3">3 matches</option>
+                                <option value="2">2 matches</option>
+                                <option value="1">1 match</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>WhatsApp</label>
+                            <input type="text" id="winnersFilterWhatsApp" placeholder="Search WhatsApp">
+                        </div>
+                    </div>
+                    <div class="actions-row" style="margin-top: 15px; flex-wrap: wrap;">
+                        <button id="validateBtn" class="btn-primary">Reload Winners</button>
+                        <button id="exportWinnersBtn" class="btn-success">Export Winners</button>
+                        <button id="winnersClearFiltersBtn" class="btn-warning">Clear Filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Qualified entries</p>
+                        <h2>Winners Table</h2>
+                    </div>
+                </div>
+
+                <div id="noResultsMessage" style="display: none; text-align: center; padding: 32px;" class="muted">
+                    <h3>⚠️ No Results Configured</h3>
+                    <p>Please add contest results first in the Results page.</p>
+                </div>
+
+                <div id="noWinnersMessage" style="display: none; text-align: center; padding: 32px;" class="muted">
+                    <h3>😔 No Winners Found</h3>
+                    <p>No entries matched 2 or more numbers for the selected criteria.</p>
+                </div>
+
+                <div class="table-container compact" id="winnersTableContainer">
+                    <table id="winnersTable">
+                        <colgroup>
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 90px;">
+                            <col style="min-width: 170px;">
+                            <col style="min-width: 110px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 160px;">
+                            <col style="min-width: 220px;">
+                            <col style="min-width: 200px;">
+                            <col style="min-width: 200px;">
+                            <col style="min-width: 140px;">
+                            <col style="min-width: 120px;">
+                            <col style="min-width: 140px;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Prize</th>
+                                <th>Matches</th>
+                                <th>Registration Date/Time</th>
+                                <th>Platform</th>
+                                <th>Game ID</th>
+                                <th>WhatsApp</th>
+                                <th>Chosen Numbers</th>
+                                <th>Winning Numbers</th>
+                                <th>Matched Numbers</th>
+                                <th>Draw Date</th>
+                                <th>Contest</th>
+                                <th>Ticket #</th>
+                            </tr>
+                        </thead>
+                        <tbody id="winnersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer-bar">
+            <p>Last Updated: <span id="lastUpdate">Never</span></p>
+        </footer>
+    </div>
+
+    <script src="date-utils.js"></script>
+    <script src="results-fetcher.js"></script>
+    <script src="data-fetcher.js"></script>
+    <script src="validator.js"></script>
+    <script src="recharge-validator.js"></script>
+    <script src="navigation.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
